@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # PREP_REPLAY_GAMES
 
 import sys

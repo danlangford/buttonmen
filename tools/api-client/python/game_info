@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # GAME_INFO
 # Example script which prints player and opponent information about
 # an existing game

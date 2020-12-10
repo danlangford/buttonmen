@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # CREATE_GAME
 # Example script which creates games, and also prints information
 # about available buttons
