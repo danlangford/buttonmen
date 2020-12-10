@@ -3,16 +3,11 @@
 # Example script which provides "monitor" functionality, polling
 # periodically for games which are waiting for you to act
 
-# Use raw_input for input if it exists (Python 2.x compatibility)
-
-try:
-  input = raw_input
-except NameError:
-  pass
 
 import optparse
 import sys
 import time
+from builtins import input
 
 from lib import bmutils
 

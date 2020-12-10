@@ -8,6 +8,7 @@ import random
 import re
 import sys
 import time
+from builtins import input
 
 from lib import bmutils
 
@@ -117,7 +118,7 @@ def create_random_game(opponent, b, players=False, usebuttons=False):
       b.username, pbutton, buttons[pbutton]['recipe'],
       opponent, obutton, buttons[obutton]['recipe']))
     print("  Create this game (y/n)?", )
-    confirm = raw_input()
+    confirm = input()
     if confirm.lower() in ['y', 'yes']:
       print(b.wrap_create_game(pbutton, obutton, opponent))
       return True
@@ -139,7 +140,7 @@ def play_all_opponents(opts, b):
   for player in players:
     if player not in skip_opponents:
       print("Start game against %s?" % player, )
-      confirm = raw_input()
+      confirm = input()
       if confirm.lower() in ['y', 'yes']:
         create_random_game(player, b, players=players,
                            usebuttons=skillbuttons)
