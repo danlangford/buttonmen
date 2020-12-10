@@ -13,12 +13,9 @@ from __future__ import absolute_import, division, print_function, \
 # Import regular stuff.
 import json
 import os
+import configparser
 
 # Import Python version specific stuff.
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 try:
     from http.cookiejar import LWPCookieJar
