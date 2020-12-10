@@ -9,19 +9,14 @@
 # Import stuff from the future.
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
-from future.standard_library import install_aliases
-install_aliases()
 
 # Import regular stuff.
 import json
 import os
 import configparser
 from http.cookiejar import LWPCookieJar
-from urllib.parse import urlparse
-from urllib.parse import urlencode
-from urllib.error import HTTPError
-from urllib.request import urlopen, Request, HTTPCookieProcessor, \
-    build_opener, install_opener
+import requests
+
 
 # CLASSES
 
@@ -64,9 +59,6 @@ class BMClient:
         self.cookiejar = LWPCookieJar(self.cookiefile)
         if os.path.isfile(self.cookiefile):
             self.cookiejar.load(ignore_discard=True)
-        self.cookieprocessor = HTTPCookieProcessor(self.cookiejar)
-        self.opener = build_opener(self.cookieprocessor)
-        install_opener(self.opener)
 
     def __init__(self, rcfile, site):
         self.username = None
@@ -77,18 +69,15 @@ class BMClient:
         self._setup_cookies()
 
     def _make_request(self, args):
-        data = json.dumps(args).encode('utf-8')
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
         }
-        req = Request(self.url, data, headers)
-        response = urlopen(req)
-        jsonval = response.read()
+        response = requests.post(url=self.url, data=json.dumps(args), headers=headers, cookies=self.cookiejar,)
         try:
-            retval = json.loads(jsonval.decode('ascii'))
+            retval = response.json()
             return BMAPIResponse(retval)
-        except Exception as e:
-            print("could not parse return: " + jsonval)
+        except ValueError as e:
+            print("could not parse return: " + response.text)
             return False
 
     def login(self):
