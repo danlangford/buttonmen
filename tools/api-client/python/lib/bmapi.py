@@ -9,37 +9,19 @@
 # Import stuff from the future.
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
+from future.standard_library import install_aliases
+install_aliases()
 
 # Import regular stuff.
 import json
 import os
 import configparser
 from http.cookiejar import LWPCookieJar
-
-# Import Python version specific stuff.
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode
-
-try:
-    from urllib.error import HTTPError
-except ImportError:
-    from urllib2 import HTTPError
-
-try:
-    from urllib.request import urlopen, Request, HTTPCookieProcessor, \
-        build_opener, install_opener
-except ImportError:
-    from urllib2 import urlopen, Request, HTTPCookieProcessor, build_opener, \
-        install_opener
-
+from urllib.parse import urlparse
+from urllib.parse import urlencode
+from urllib.error import HTTPError
+from urllib.request import urlopen, Request, HTTPCookieProcessor, \
+    build_opener, install_opener
 
 # CLASSES
 
