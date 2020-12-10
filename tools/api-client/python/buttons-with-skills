@@ -10,12 +10,12 @@
 
 from __future__ import division
 
-# Import regular stuff.
-
-import configparser
 import argparse
+import configparser
 import os
 import sys
+
+
 
 # Import Button Men utilities.
 

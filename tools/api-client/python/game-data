@@ -6,10 +6,10 @@
 
 # IMPORTS
 
-# Import regular stuff.
 
-import configparser
+
 import argparse
+import configparser
 import json
 import os
 import sys

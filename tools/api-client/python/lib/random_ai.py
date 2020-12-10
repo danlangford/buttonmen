@@ -1,10 +1,10 @@
-import json
 import itertools
+import json
+import os
 import pickle
 import random
-import time
-import os
 import sys
+import time
 
 NUMERIC_KEYS = [
     'activePlayerIdx',

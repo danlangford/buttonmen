@@ -10,11 +10,11 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-# Import regular stuff.
+import configparser
 import json
 import os
-import configparser
 from http.cookiejar import LWPCookieJar
+
 import requests
 
 

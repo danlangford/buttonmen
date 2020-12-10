@@ -27,4 +27,4 @@ if not bmconnection.verify_login():
 gamenumber = 3038
 
 game = bmconnection.wrap_load_game_data(gamenumber)
-print(json.dumps(game, sys.stdout, indent=1, sort_keys=True))
+print(json.dumps(game, indent=1, sort_keys=True))

@@ -15,12 +15,12 @@
 # will blow up and stop running.  Failures in step 4 are saved in
 # log files for later inspection, but the loop continues.
 
+import datetime
 import os
 import re
 import subprocess
 import sys
 import time
-import datetime
 
 HOSTNAME = subprocess.check_output(['hostname', ]).strip()
 COMMITID = None

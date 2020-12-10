@@ -9,7 +9,6 @@ sys.path.append('lib')
 
 import bmutils
 import optparse
-import time
 
 
 # implicitly parses sys.argv
@@ -51,11 +50,11 @@ if not b.verify_login():
 
 gamedata = b.wrap_load_game_data(args[0])
 tabledata = []
-for player in ['player', 'opponent', ]:
+for player in ['player', 'opponent']:
     tabledata.append(
         [gamedata[player]['playerName'] + ':',
          gamedata[player]['button']['name'] + ':',
          gamedata[player]['button']['recipe'],
-         ]
+        ]
     )
 print_table(tabledata)

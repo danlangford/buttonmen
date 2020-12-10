@@ -12,12 +12,12 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-# Import regular stuff.
-
 import argparse
+import configparser
 import os
 import sys
-import configparser
+
+
 
 # Import Button Men utilities.
 
