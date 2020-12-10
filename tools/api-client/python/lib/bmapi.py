@@ -14,13 +14,9 @@ from __future__ import absolute_import, division, print_function, \
 import json
 import os
 import configparser
+from http.cookiejar import LWPCookieJar
 
 # Import Python version specific stuff.
-
-try:
-    from http.cookiejar import LWPCookieJar
-except ImportError:
-    from cookielib import LWPCookieJar
 
 try:
     from urllib.parse import urlparse
