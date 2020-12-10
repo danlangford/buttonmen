@@ -72,7 +72,8 @@ class BMClient:
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
         }
-        response = requests.post(url=self.url, data=json.dumps(args), headers=headers, cookies=self.cookiejar,)
+        response = requests.post(url=self.url, data=json.dumps(args),
+                                 headers=headers, cookies=self.cookiejar, )
         try:
             retval = response.json()
             return BMAPIResponse(retval)

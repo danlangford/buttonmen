@@ -3,15 +3,13 @@
 # Example script which creates games, and also prints information
 # about available buttons
 
-import sys
-
-sys.path.append('lib')
-
-import bmutils
 import optparse
 import random
 import re
+import sys
 import time
+
+from lib import bmutils
 
 die_recipe_re = re.compile('^([^(]*)\(([^)]+)\)(.*)$')
 

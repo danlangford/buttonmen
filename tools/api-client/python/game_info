@@ -3,12 +3,10 @@
 # Example script which prints player and opponent information about
 # an existing game
 
+import optparse
 import sys
 
-sys.path.append('lib')
-
-import bmutils
-import optparse
+from lib import bmutils
 
 
 # implicitly parses sys.argv
@@ -55,6 +53,6 @@ for player in ['player', 'opponent']:
         [gamedata[player]['playerName'] + ':',
          gamedata[player]['button']['name'] + ':',
          gamedata[player]['button']['recipe'],
-        ]
+         ]
     )
 print_table(tabledata)

@@ -6,16 +6,13 @@
 
 bmrc = "~/.bmrc"
 site = "www"
-bmutilspath = "./lib"
 
 # Import everything, make a connection, and try to log in.
 
 import json
 import os
-import sys
 
-sys.path.append(os.path.expanduser(bmutilspath).rstrip("/"))
-import bmutils
+from lib import bmutils
 
 bmconnection = bmutils.BMClientParser(os.path.expanduser(bmrc), site)
 if not bmconnection.verify_login():

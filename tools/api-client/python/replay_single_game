@@ -59,11 +59,11 @@ def test_game(filename, gamenum):
         'sudo chown chaos %s' % TESTFILE,
         'echo "<?php" | %s tee -a %s' % (write_to_bm_prefix, TESTFILE),
         'echo "require_once \'responderTestFramework.php\';" | %s tee -a %s' % (
-        write_to_bm_prefix, TESTFILE),
+            write_to_bm_prefix, TESTFILE),
         'echo "class responder99Test extends responderTestFramework {" | %s tee -a %s' % (
-        write_to_bm_prefix, TESTFILE),
+            write_to_bm_prefix, TESTFILE),
         './update_replay_games ./output | %s tee -a %s > /dev/null' % (
-        write_to_bm_prefix, TESTFILE),
+            write_to_bm_prefix, TESTFILE),
         '/bin/rm ./output/*',
         'echo "}" | %s tee -a %s > /dev/null' % (write_to_bm_prefix, TESTFILE),
     ]

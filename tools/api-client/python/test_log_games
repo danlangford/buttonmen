@@ -4,8 +4,6 @@
 import os
 import sys
 
-sys.path.append('lib')
-
 CONFIGPATH = "%s/share/buttonmen/.bmrc" % os.getenv('HOME')
 
 import bmapi

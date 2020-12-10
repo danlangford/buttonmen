@@ -17,12 +17,7 @@ import configparser
 import os
 import sys
 
-
-
-# Import Button Men utilities.
-
-sys.path.append('lib')
-import bmutils
+from lib import bmutils
 
 
 # FUNCTIONS

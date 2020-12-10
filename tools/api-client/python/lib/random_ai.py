@@ -1454,7 +1454,7 @@ class LoggingBMClient:
             choices.append('turndown')
         if is_power_turndown and attacker_sum >= defender_sum:
             choices.append(
-            'no_turndown')
+                'no_turndown')
         choice = self._random_array_element(choices)
         idx_array = []
         value_array = []

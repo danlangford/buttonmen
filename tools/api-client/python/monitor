@@ -10,13 +10,11 @@ try:
 except NameError:
     pass
 
-import sys
-
-sys.path.append('lib')
-
-import bmutils
 import optparse
+import sys
 import time
+
+from lib import bmutils
 
 
 # implicitly parses sys.argv

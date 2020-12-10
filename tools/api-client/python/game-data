@@ -7,35 +7,24 @@
 # IMPORTS
 
 
-
 import argparse
 import configparser
 import json
 import os
 import sys
 
-# Import yaml if we can, and set a variable to track whether we did or not.
+import yaml
 
-try:
-    import yaml
+from lib import bmutils
 
-    yaml_available = True
-except ImportError:
-    yaml_available = False
-
-# Import Button Men utilities.
-
-sys.path.append('lib')
-import bmutils
 
 # CLASSES
 
 # A class to not use anchors and aliases when dumping YAML.
 
-if yaml_available:
-    class noalias_dumper(yaml.SafeDumper):
-        def ignore_aliases(self, _data):
-            return True
+class noalias_dumper(yaml.SafeDumper):
+    def ignore_aliases(self, _data):
+        return True
 
 
 # FUNCTIONS
@@ -47,10 +36,9 @@ def parse_arguments():
 
     parser.add_argument('gamenumber', help="game number")
 
-    if yaml_available:
-        parser.add_argument('--format',
-                            choices=['json', 'yaml'], default='yaml',
-                            help="output data format (default: yaml)")
+    parser.add_argument('--format',
+                        choices=['json', 'yaml'], default='yaml',
+                        help="output data format (default: yaml)")
 
     # Add general optional arguments.
 
@@ -91,7 +79,7 @@ game = bmconn.wrap_load_game_data(args.gamenumber)
 
 # Print the game data.
 
-if not yaml_available or args.format == 'json':
+if args.format == 'json':
     print(json.dumps(game, indent=1, sort_keys=True))
-else:
+elif args.format == 'yaml':
     print(yaml.dump(game, Dumper=noalias_dumper))
