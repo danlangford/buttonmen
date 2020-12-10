@@ -16,7 +16,7 @@ from lib import bmutils
 
 bmconnection = bmutils.BMClientParser(os.path.expanduser(bmrc), site)
 if not bmconnection.verify_login():
-    print("Could not login")
+  print("Could not login")
 
 # At this point you can do whatever you want. Here's how to load a game,
 # and print its info in nice JSON.

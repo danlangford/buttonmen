@@ -23,37 +23,37 @@ from lib import bmutils
 # PARSE ARGUMENTS
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description="Create a game between two players with two buttons and a description.")
+  parser = argparse.ArgumentParser(
+      description="Create a game between two players with two buttons and a description.")
 
-    parser.add_argument('--player', default='',
-                        help="one player (yourself by default)")
+  parser.add_argument('--player', default='',
+                      help="one player (yourself by default)")
 
-    parser.add_argument('--player-button', default='',
-                        help="that player's button")
+  parser.add_argument('--player-button', default='',
+                      help="that player's button")
 
-    parser.add_argument('--opponent', default='',
-                        help="the other player (none (creates an open game) by default)")
+  parser.add_argument('--opponent', default='',
+                      help="the other player (none (creates an open game) by default)")
 
-    parser.add_argument('--opponent-button', default='',
-                        help="the other player's button")
+  parser.add_argument('--opponent-button', default='',
+                      help="the other player's button")
 
-    parser.add_argument('--description', default='',
-                        help="description of the game (blank by default)")
+  parser.add_argument('--description', default='',
+                      help="description of the game (blank by default)")
 
-    # Add general optional arguments.
+  # Add general optional arguments.
 
-    parser.add_argument('--site',
-                        default='www',
-                        help="site to check ('www' by default)")
+  parser.add_argument('--site',
+                      default='www',
+                      help="site to check ('www' by default)")
 
-    parser.add_argument('--config', '-c',
-                        default='~/.bmrc',
-                        help="config file containing site parameters")
+  parser.add_argument('--config', '-c',
+                      default='~/.bmrc',
+                      help="config file containing site parameters")
 
-    # Return the parser.
+  # Return the parser.
 
-    return parser.parse_args()
+  return parser.parse_args()
 
 
 # MAIN BODY
@@ -63,20 +63,20 @@ args = parse_arguments()
 # Connect to the site.
 
 try:
-    bmconn = bmutils.BMClientParser(os.path.expanduser(args.config), args.site)
+  bmconn = bmutils.BMClientParser(os.path.expanduser(args.config), args.site)
 except configparser.NoSectionError as e:
-    print("ERROR: {0} doesn't seem to have a '{1}' section".format(args.config,
-                                                                   args.site))
-    print("(Exception: {0}: {1})".format(e.__module__, e.message))
-    sys.exit(1)
+  print("ERROR: {0} doesn't seem to have a '{1}' section".format(args.config,
+                                                                 args.site))
+  print("(Exception: {0}: {1})".format(e.__module__, e.message))
+  sys.exit(1)
 
 if not bmconn.verify_login():
-    print("ERROR: Could not log in to {0}".format(args.site))
-    sys.exit(1)
+  print("ERROR: Could not log in to {0}".format(args.site))
+  sys.exit(1)
 
 # Create the game!
 
 gamedata = bmconn.wrap_create_game(args.player_button, args.opponent_button,
                                    args.player, args.opponent, args.description)
 if gamedata['gameId']:
-    print("Game {} created".format(gamedata['gameId']))
+  print("Game {} created".format(gamedata['gameId']))
