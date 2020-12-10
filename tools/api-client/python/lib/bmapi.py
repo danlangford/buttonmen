@@ -77,7 +77,7 @@ class BMClient:
         self._setup_cookies()
 
     def _make_request(self, args):
-        data = json.dumps(args)
+        data = json.dumps(args).encode('utf-8')
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
         }
