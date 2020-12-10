@@ -59,7 +59,8 @@ class BMClientParser(bmapi.BMClient):
         retval = self.load_button_names()
         if not retval.status == 'ok':
             raise (
-            ValueError, "Failed to get button data, got: %s" % retval.message)
+                ValueError,
+                "Failed to get button data, got: %s" % retval.message)
         data = retval.data
         buttons = {}
         for i in range(len(data)):
@@ -70,7 +71,7 @@ class BMClientParser(bmapi.BMClient):
         retval = self.load_player_names()
         if not retval.status == 'ok':
             raise (
-            ValueError, "Failed to get player data, got: " + retval.message)
+                ValueError, "Failed to get player data, got: " + retval.message)
         data = retval.data
         players = {}
         for i in range(len(data['nameArray'])):
@@ -114,7 +115,7 @@ class BMClientParser(bmapi.BMClient):
                                   description)
         if not retval.status == 'ok':
             raise (
-            ValueError, "Failed to call createGame, got: " + retval.message)
+                ValueError, "Failed to call createGame, got: " + retval.message)
         return retval.data
 
     def wrap_load_game_data(self, game):

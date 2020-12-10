@@ -1,5 +1,5 @@
 #!/usr/bin/python
-##### replay_loop
+# REPLAY_LOOP
 # This loop is designed for use on a VM which is recording games
 # for use in replay-testing of new code, or on a VM which is
 # replay-testing new code against recorded games.  It does:
@@ -29,10 +29,10 @@ LOGF = None
 USERNAME = 'ubuntu'
 
 PARENTDIR = '/srv/bmgames/chaos-test'
-GAMESDIR = '%s/archive' % (PARENTDIR)
+GAMESDIR = '%s/archive' % PARENTDIR
 STATEDIR = '%s/replay_state/%s' % (PARENTDIR, HOSTNAME)
-STATEFILE = '%s/filesread' % (STATEDIR)
-LOGFILE = '%s/replay_loop.log' % (STATEDIR)
+STATEFILE = '%s/filesread' % STATEDIR
+LOGFILE = '%s/replay_loop.log' % STATEDIR
 SRCDIR = '/buttonmen/src'
 TESTDIR = '/buttonmen/test'
 TESTFILE = '%s/src/api/responder99Test.php' % TESTDIR
@@ -40,132 +40,147 @@ TESTFILE = '%s/src/api/responder99Test.php' % TESTDIR
 SLEEPSECS = 60
 
 # e.g. 390b58027049ef07562b17ff9503471d0f2aae38.games.20160205.163427.tar.bz2
-GAMEFILE_RE = re.compile('^([0-9a-f]{40})\.games\.([0-9]{8}\.[0-9]{6})\.tar\.bz2$')
+GAMEFILE_RE = re.compile(
+    '^([0-9a-f]{40})\.games\.([0-9]{8}\.[0-9]{6})\.tar\.bz2$')
 
 ORIGDIR = os.getcwd()
 HOMEBMDIR = "%s/src/buttonmen" % ORIGDIR
 
-ARCHIVE_GAMES = len(sys.argv) > 1 and sys.argv[1] in [ '-a', '--archive', ]
-SKIP_INIT_NEW_GAMES = len(sys.argv) > 1 and sys.argv[1] in [ '-s', '--skip-init', ]
+ARCHIVE_GAMES = len(sys.argv) > 1 and sys.argv[1] in ['-a', '--archive', ]
+SKIP_INIT_NEW_GAMES = len(sys.argv) > 1 and sys.argv[1] in ['-s',
+                                                            '--skip-init', ]
+
 
 def setup():
-  global COMMITID
-  global LOGF
-  if not os.path.isdir(STATEDIR):
-    os.mkdir(STATEDIR)
-  os.chdir(SRCDIR)
-  if ARCHIVE_GAMES:
-    f = open('/buttonmen/.git/FETCH_HEAD')
-    COMMITID = f.readline().split()[0]
-    f.close()
-  LOGF = open(LOGFILE, 'a')
+    global COMMITID
+    global LOGF
+    if not os.path.isdir(STATEDIR):
+        os.mkdir(STATEDIR)
+    os.chdir(SRCDIR)
+    if ARCHIVE_GAMES:
+        f = open('/buttonmen/.git/FETCH_HEAD')
+        COMMITID = f.readline().split()[0]
+        f.close()
+    LOGF = open(LOGFILE, 'a')
+
 
 def load_state():
-  if os.path.isfile(STATEFILE):
-    f = open(STATEFILE, 'r')
-    state = [l.strip() for l in f.readlines()]
-    f.close()
-  else:
-    state = []
-  return state
+    if os.path.isfile(STATEFILE):
+        f = open(STATEFILE, 'r')
+        state = [l.strip() for l in f.readlines()]
+        f.close()
+    else:
+        state = []
+    return state
+
 
 def save_state(state):
-  f = open(STATEFILE, 'w')
-  for l in state:
-    f.write('%s\n' % l)
-  f.close()
+    f = open(STATEFILE, 'w')
+    for l in state:
+        f.write('%s\n' % l)
+    f.close()
+
 
 def find_next_file(state):
-  newest_file = None
-  newest_timestamp = None
-  dirfiles = os.listdir(GAMESDIR)
-  for dirfile in dirfiles:
-    if dirfile in state: continue
-    mobj = GAMEFILE_RE.match(dirfile)
-    if mobj:
-      if not newest_timestamp or mobj.group(2) > newest_timestamp:
-        newest_timestamp = mobj.group(2)
-        newest_file = dirfile
-  return newest_file
+    newest_file = None
+    newest_timestamp = None
+    dirfiles = os.listdir(GAMESDIR)
+    for dirfile in dirfiles:
+        if dirfile in state:
+            continue
+        mobj = GAMEFILE_RE.match(dirfile)
+        if mobj:
+            if not newest_timestamp or mobj.group(2) > newest_timestamp:
+                newest_timestamp = mobj.group(2)
+                newest_file = dirfile
+    return newest_file
+
 
 def test_file(filename):
-  ## prep test file for replay
-  os.chdir(HOMEBMDIR)
-  if USERNAME == 'vagrant':
-    write_to_bm_prefix = 'sudo -u %s' % USERNAME
-  else:
-    write_to_bm_prefix = ''
-  tar_command = 'tar xf %s/%s' % (GAMESDIR, filename)
-  for retry in range(3):
-    retval = os.system(tar_command)
-    if retval == 0:
-      break
-    print "tar failed - retrying: %s" % tar_command
-    time.sleep(SLEEPSECS)
-  else:
-    print "tar failed too many times - giving up"
-    sys.exit(1)
-  commands = [
-    'sudo -u %s touch %s' % (USERNAME, TESTFILE),
-    'sudo chown chaos %s' % TESTFILE,
-    'echo "<?php" | %s tee -a %s' % (write_to_bm_prefix, TESTFILE),
-    'echo "require_once \'responderTestFramework.php\';" | %s tee -a %s' % (write_to_bm_prefix, TESTFILE),
-    'echo "class responder99Test extends responderTestFramework {" | %s tee -a %s' % (write_to_bm_prefix, TESTFILE),
-    './update_replay_games ./output | %s tee -a %s > /dev/null' % (write_to_bm_prefix, TESTFILE),
-    '/bin/rm ./output/*',
-    'echo "}" | %s tee -a %s > /dev/null' % (write_to_bm_prefix, TESTFILE),
-  ]
-  if os.path.isfile(TESTFILE):
-    commands.insert(0, 'sudo -u %s rm -f %s' % (USERNAME, TESTFILE))
-  for command in commands:
-    retval = os.system(command)
-    if retval != 0:
-      print "command failed: %s" % command
-      sys.exit(1)
-  os.chdir(SRCDIR)
+    # prep test file for replay
+    os.chdir(HOMEBMDIR)
+    if USERNAME == 'vagrant':
+        write_to_bm_prefix = 'sudo -u %s' % USERNAME
+    else:
+        write_to_bm_prefix = ''
+    tar_command = 'tar xf %s/%s' % (GAMESDIR, filename)
+    for retry in range(3):
+        retval = os.system(tar_command)
+        if retval == 0:
+            break
+        print("tar failed - retrying: %s" % tar_command)
+        time.sleep(SLEEPSECS)
+    else:
+        print("tar failed too many times - giving up")
+        sys.exit(1)
+    commands = [
+        'sudo -u %s touch %s' % (USERNAME, TESTFILE),
+        'sudo chown chaos %s' % TESTFILE,
+        'echo "<?php" | %s tee -a %s' % (write_to_bm_prefix, TESTFILE),
+        'echo "require_once \'responderTestFramework.php\';" | %s tee -a %s' % (
+        write_to_bm_prefix, TESTFILE),
+        'echo "class responder99Test extends responderTestFramework {" | %s tee -a %s' % (
+        write_to_bm_prefix, TESTFILE),
+        './update_replay_games ./output | %s tee -a %s > /dev/null' % (
+        write_to_bm_prefix, TESTFILE),
+        '/bin/rm ./output/*',
+        'echo "}" | %s tee -a %s > /dev/null' % (write_to_bm_prefix, TESTFILE),
+    ]
+    if os.path.isfile(TESTFILE):
+        commands.insert(0, 'sudo -u %s rm -f %s' % (USERNAME, TESTFILE))
+    for command in commands:
+        retval = os.system(command)
+        if retval != 0:
+            print("command failed: %s" % command)
+            sys.exit(1)
+    os.chdir(SRCDIR)
 
-  # actually run the test, capturing output
-  logfile = '%s/%s.output' % (STATEDIR, filename)
-  cmdargs = 'sudo -u %s sh -c "phpunit --bootstrap /usr/local/etc/buttonmen_phpunit.php --group fulltest_deps /buttonmen/test/src/api/ 2>&1" | tee %s' % (USERNAME, logfile)
-  print "About to execute: %s" % cmdargs
-  os.system(cmdargs)
-  return
+    # actually run the test, capturing output
+    logfile = '%s/%s.output' % (STATEDIR, filename)
+    cmdargs = 'sudo -u %s sh -c "phpunit --bootstrap /usr/local/etc/buttonmen_phpunit.php --group fulltest_deps /buttonmen/test/src/api/ 2>&1" | tee %s' % (
+    USERNAME, logfile)
+    print("About to execute: %s" % cmdargs)
+    os.system(cmdargs)
+    return
+
 
 def test_new_games():
-  # If we're running in archive mode, this will generate new games
-  # and archive them for replay testing on this and other sites.
-  # Otherwise, it will simply run the tests and discard the results.
-  #
-  # Regardless, this is intended to blow up if any exceptions are
-  # received.
+    # If we're running in archive mode, this will generate new games
+    # and archive them for replay testing on this and other sites.
+    # Otherwise, it will simply run the tests and discard the results.
+    #
+    # Regardless, this is intended to blow up if any exceptions are
+    # received.
 
-  # Reset primary and test databases
-  os.system('echo "drop database buttonmen" | sudo mysql')
-  os.system('sudo /usr/local/bin/create_buttonmen_databases')
-  os.system('cat ~/example_players.sql | sudo mysql')
+    # Reset primary and test databases
+    os.system('echo "drop database buttonmen" | sudo mysql')
+    os.system('sudo /usr/local/bin/create_buttonmen_databases')
+    os.system('cat ~/example_players.sql | sudo mysql')
 
-  os.chdir(HOMEBMDIR)
-  retval = os.system('./test_log_games 100')
-  if retval != 0:
-    sys.exit(1)
+    os.chdir(HOMEBMDIR)
+    retval = os.system('./test_log_games 100')
+    if retval != 0:
+        sys.exit(1)
 
-  target_file = ARCHIVE_GAMES and './output/allgames.php' or '/dev/null'
-  retval = os.system('./prep_replay_games ./output > %s' % target_file)
-  if retval != 0:
-    sys.exit(1)
+    target_file = ARCHIVE_GAMES and './output/allgames.php' or '/dev/null'
+    retval = os.system('./prep_replay_games ./output > %s' % target_file)
+    if retval != 0:
+        sys.exit(1)
 
-  if ARCHIVE_GAMES:
-    timestamp = datetime.datetime.now().strftime('%Y%m%d.%H%M%S')
-    targetpath = '%s/%s.games.%s.tar' % (GAMESDIR, COMMITID, timestamp)
-    os.system('tar cf %s ./output' % (targetpath))
-    os.system('bzip2 %s' % (targetpath))
-  os.system('rm ./output/*')
-  os.chdir(SRCDIR)
+    if ARCHIVE_GAMES:
+        timestamp = datetime.datetime.now().strftime('%Y%m%d.%H%M%S')
+        targetpath = '%s/%s.games.%s.tar' % (GAMESDIR, COMMITID, timestamp)
+        os.system('tar cf %s ./output' % targetpath)
+        os.system('bzip2 %s' % targetpath)
+    os.system('rm ./output/*')
+    os.chdir(SRCDIR)
+
 
 def log(message):
-  LOGF.write('%s: %s\n' % (
-    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message))
-  LOGF.flush()
+    LOGF.write('%s: %s\n' % (
+        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message))
+    LOGF.flush()
+
 
 ########################################################################
 setup()
@@ -173,20 +188,20 @@ log("Starting replay_loop")
 state = load_state()
 skip_init_new_games = SKIP_INIT_NEW_GAMES
 while True:
-  if skip_init_new_games:
-    print "Skipping new games the first time"
-    skip_init_new_games = False
-  else:
-    log("Testing new games")
-    test_new_games()
-  nextfile = find_next_file(state)
-  if nextfile:
-    print "Testing %s..." % nextfile
-    log("Testing replay of %s" % nextfile)
-    test_file(nextfile)
-    state.append(nextfile)
-    save_state(state)
-  else:
-    print "No new files; sleeping..."
-    log("No files to replay; sleeping...")
-    time.sleep(SLEEPSECS)
+    if skip_init_new_games:
+        print("Skipping new games the first time")
+        skip_init_new_games = False
+    else:
+        log("Testing new games")
+        test_new_games()
+    nextfile = find_next_file(state)
+    if nextfile:
+        print("Testing %s..." % nextfile)
+        log("Testing replay of %s" % nextfile)
+        test_file(nextfile)
+        state.append(nextfile)
+        save_state(state)
+    else:
+        print("No new files; sleeping...")
+        log("No files to replay; sleeping...")
+        time.sleep(SLEEPSECS)

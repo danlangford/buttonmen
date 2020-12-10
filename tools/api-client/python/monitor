@@ -1,53 +1,56 @@
 #!/usr/bin/python
-##### monitor
+# MONITOR
 # Example script which provides "monitor" functionality, polling
 # periodically for games which are waiting for you to act
 
 # Use raw_input for input if it exists (Python 2.x compatibility)
 
 try:
-  input = raw_input
+    input = raw_input
 except NameError:
-  pass
+    pass
 
 import sys
+
 sys.path.append('lib')
 
 import bmutils
 import optparse
 import time
 
+
 # implicitly parses sys.argv
 def parse_args():
-  parser = optparse.OptionParser()
-  parser.add_option(
-    "-c", "--config",
-    help="config file containing site parameters",
-    type=str, default=".bmrc"
-  )
-  parser.add_option(
-    "-s", "--site",
-    help="buttonmen site to access",
-    type=str, default="www"
-  )
-  return parser.parse_args()
+    parser = optparse.OptionParser()
+    parser.add_option(
+        "-c", "--config",
+        help="config file containing site parameters",
+        type=str, default=".bmrc"
+    )
+    parser.add_option(
+        "-s", "--site",
+        help="buttonmen site to access",
+        type=str, default="www"
+    )
+    return parser.parse_args()
+
 
 [opts, args] = parse_args()
 b = bmutils.BMClientParser(opts.config, opts.site)
 if not b.verify_login():
-  print("Could not login")
-  sys.exit(1)
+    print("Could not login")
+    sys.exit(1)
 
 while True:
-  games = b.wrap_load_active_games()
-  games_active = False
-  for game in games:
-    if game['isAwaitingAction']:
-      print("%s: %s (%s) vs. %s (%s)" % (
-        game['gameId'], b.username, game['myButtonName'],
-        game['opponentName'], game['opponentButtonName']))
-      games_active = True
-  if games_active:
-    confirm = input()
-  else:
-    time.sleep(30)
+    games = b.wrap_load_active_games()
+    games_active = False
+    for game in games:
+        if game['isAwaitingAction']:
+            print("%s: %s (%s) vs. %s (%s)" % (
+                game['gameId'], b.username, game['myButtonName'],
+                game['opponentName'], game['opponentButtonName']))
+            games_active = True
+    if games_active:
+        confirm = input()
+    else:
+        time.sleep(30)

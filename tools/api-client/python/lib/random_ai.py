@@ -473,7 +473,7 @@ class PHPBMClientOutputWriter:
             else:
                 olddie = olddice[dnum]
             for dkey in sorted(olddie.keys()):
-                if not dkey in newdie:
+                if dkey not in newdie:
                     suffix = "['playerDataArray'][%d]['%s'][%d]['%s']" % (
                         pnum, pkey, dnum, dkey)
                     self.f.write("        unset($expData%s);\n" % suffix)
@@ -488,12 +488,14 @@ class PHPBMClientOutputWriter:
                                                      olddie[dkey])
                 elif dkey in ['properties', 'skills', ]:
                     oldval = {}
-                    if dkey in olddie: oldval = olddie[dkey]
+                    if dkey in olddie:
+                        oldval = olddie[dkey]
                     self._write_php_diff_flat_array_key(suffix, newdie[dkey],
                                                         oldval)
                 elif dkey in ['subdieArray', ]:
                     oldval = {}
-                    if dkey in olddie: oldval = olddie[dkey]
+                    if dkey in olddie:
+                        oldval = olddie[dkey]
                     self._write_php_diff_subdie_array(suffix, newdie[dkey],
                                                       oldval)
                 else:
@@ -505,7 +507,7 @@ class PHPBMClientOutputWriter:
 
     def _write_php_diff_player_data_array(self, key, pnum, newdata, olddata):
         for pkey in sorted(olddata.keys()):
-            if not pkey in newdata:
+            if pkey not in newdata:
                 suffix = "['playerDataArray'][%d]['%s']" % (pnum, pkey)
                 self.f.write("        unset($expData%s);\n" % suffix)
         for pkey in sorted(newdata.keys()):
@@ -513,7 +515,8 @@ class PHPBMClientOutputWriter:
             if pkey in ['activeDieArray', 'capturedDieArray',
                         'outOfPlayDieArray', ]:
                 oldval = {}
-                if pkey in olddata: oldval = olddata[pkey]
+                if pkey in olddata:
+                    oldval = olddata[pkey]
                 self._write_php_diff_player_data_die_array(pnum, pkey,
                                                            newdata[pkey],
                                                            oldval)
@@ -695,8 +698,10 @@ class LoggingBMClient:
                     return 0
                 else:
                     return 1
-        if len(player_vals) > 0: return 0
-        if len(opponent_vals) > 0: return 1
+        if len(player_vals) > 0:
+            return 0
+        if len(opponent_vals) > 0:
+            return 1
         # This is what _can_gain_initiative_using_focus_dice() needs in case of ties
         # Revisit for use by other consumers
         return 0
@@ -711,7 +716,8 @@ class LoggingBMClient:
             for skill in die['skills']:
                 if skill in skip_initiative_skills:
                     skip_die = True
-            if skip_die: continue
+            if skip_die:
+                continue
             if 'Focus' in die['skills']:
                 if ',' in die['recipe']:
                     player_initiative_values.append(2)
@@ -724,7 +730,8 @@ class LoggingBMClient:
             for skill in die['skills']:
                 if skill in skip_initiative_skills:
                     skip_die = True
-            if skip_die: continue
+            if skip_die:
+                continue
             opponent_initiative_values.append(die['value'])
         return self._player_with_initiative_from_values(
             player_initiative_values, opponent_initiative_values) == 0
@@ -737,8 +744,10 @@ class LoggingBMClient:
             else:
                 skill_found = True
             for skill in die['skills']:
-                if not skill in all_skills: all_skills.append(skill)
-                if skill in okay_skills['no']: return False
+                if skill not in all_skills:
+                    all_skills.append(skill)
+                if skill in okay_skills['no']:
+                    return False
                 if 'mandatory' in okay_skills and skill in okay_skills[
                     'mandatory']:
                     skill_found = True
@@ -747,8 +756,10 @@ class LoggingBMClient:
                     self.bug(
                         "Skill %s found in die %s is not defined in okay_skills array %s" % (
                             skill, die, okay_skills))
-            if not skill_found: return False
-            if 'Dizzy' in die['properties']: return False
+            if not skill_found:
+                return False
+            if 'Dizzy' in die['properties']:
+                return False
         return all_skills
 
     def _is_valid_attack_of_type_Berserk(self, attackers, defenders,
@@ -780,10 +791,12 @@ class LoggingBMClient:
         }
         attacker_okay_skills = self._valid_dice_for_skill(attackers,
                                                           attack_skills)
-        if not attacker_okay_skills: return False
+        if not attacker_okay_skills:
+            return False
         defender_okay_skills = self._valid_dice_for_skill(defenders,
                                                           defend_skills)
-        if not defender_okay_skills: return False
+        if not defender_okay_skills:
+            return False
         defender_sum = 0
         for defender in defenders:
             defender_sum += defender['value']
@@ -817,10 +830,12 @@ class LoggingBMClient:
         }
         attacker_okay_skills = self._valid_dice_for_skill(attackers,
                                                           attack_skills)
-        if not attacker_okay_skills: return False
+        if not attacker_okay_skills:
+            return False
         defender_okay_skills = self._valid_dice_for_skill(defenders,
                                                           defend_skills)
-        if not defender_okay_skills: return False
+        if not defender_okay_skills:
+            return False
         # There are no limits on a Boom attack except that the attacker must have the Boom skill
         return True
 
@@ -853,10 +868,12 @@ class LoggingBMClient:
         }
         attacker_okay_skills = self._valid_dice_for_skill(attackers,
                                                           attack_skills)
-        if not attacker_okay_skills: return False
+        if not attacker_okay_skills:
+            return False
         defender_okay_skills = self._valid_dice_for_skill(defenders,
                                                           defend_skills)
-        if not defender_okay_skills: return False
+        if not defender_okay_skills:
+            return False
         available_fire = 0
         for non_attacker in non_attackers:
             if 'Fire' in non_attacker['skills']:
@@ -864,9 +881,11 @@ class LoggingBMClient:
         attacker = attackers[0]
         defender = defenders[0]
         if 'Queer' in attacker_okay_skills and attacker[
-            'value'] % 2 == 1: return False
+            'value'] % 2 == 1:
+            return False
         if (attacker['value'] + available_fire) >= defender['value'] \
-            and int(attacker['sides']) >= defender['value']: return True
+            and int(attacker['sides']) >= defender['value']:
+            return True
         return False
 
     def _is_valid_attack_of_type_Shadow(self, attackers, defenders,
@@ -898,15 +917,20 @@ class LoggingBMClient:
         }
         attacker_okay_skills = self._valid_dice_for_skill(attackers,
                                                           attack_skills)
-        if not attacker_okay_skills: return False
+        if not attacker_okay_skills:
+            return False
         defender_okay_skills = self._valid_dice_for_skill(defenders,
                                                           defend_skills)
-        if not defender_okay_skills: return False
+        if not defender_okay_skills:
+            return False
         attacker = attackers[0]
         defender = defenders[0]
-        if attacker['value'] > defender['value']: return False
-        if int(attacker['sides']) < defender['value']: return False
-        if 'Shadow' in attacker_okay_skills: return True
+        if attacker['value'] > defender['value']:
+            return False
+        if int(attacker['sides']) < defender['value']:
+            return False
+        if 'Shadow' in attacker_okay_skills:
+            return True
         if 'Queer' in attacker_okay_skills:
             if attacker['value'] % 2 == 0:
                 return False
@@ -942,10 +966,12 @@ class LoggingBMClient:
         }
         attacker_okay_skills = self._valid_dice_for_skill(attackers,
                                                           attack_skills)
-        if not attacker_okay_skills: return False
+        if not attacker_okay_skills:
+            return False
         defender_okay_skills = self._valid_dice_for_skill(defenders,
                                                           defend_skills)
-        if not defender_okay_skills: return False
+        if not defender_okay_skills:
+            return False
         attacker = attackers[0]
         defender = defenders[0]
         attacker_max = self._max_trip_value(attacker)
@@ -953,7 +979,8 @@ class LoggingBMClient:
         return attacker_max >= defender_min
 
     def _max_trip_value(self, die):
-        if 'Konstant' in die['skills']: return die['value']
+        if 'Konstant' in die['skills']:
+            return die['value']
         post_trip_sides = int(die['sides'])
         if 'Mighty' in die['skills']:
             post_trip_sides = self._next_mighty_value(post_trip_sides)
@@ -967,7 +994,7 @@ class LoggingBMClient:
                 post_trip_sides = int(die['recipe'].split('/')[1].split(')')[0])
             else:
                 swing_size = die['recipe'].split(',')[1].split(')')[0]
-                if not swing_size in SWING_RANGES:
+                if swing_size not in SWING_RANGES:
                     raise ValueError(
                         "Could not figure out turbo trip die: %s" % die)
                 post_trip_sides = SWING_RANGES[swing_size][-1]
@@ -976,25 +1003,29 @@ class LoggingBMClient:
         return post_trip_sides
 
     def _min_trip_value(self, die):
-        if 'Konstant' in die['skills']: return die['value']
+        if 'Konstant' in die['skills']:
+            return die['value']
         post_trip_sides = int(die['sides'])
         if 'Mighty' in die['skills']:
             post_trip_sides = self._next_mighty_value(post_trip_sides)
         if 'Weak' in die['skills']:
             post_trip_sides = self._next_weak_value(post_trip_sides)
-        if 'Maximum' in die['skills']: return post_trip_sides
+        if 'Maximum' in die['skills']:
+            return post_trip_sides
         if ',' in die['recipe']:
             return 2
         return 1
 
     def _next_mighty_value(self, sides):
         sizes = [1, 2, 4, 6, 8, 10, 12, 16, 20, 30]
-        if sides >= sizes[-1]: return sizes[-1]  # or should this return sides?
+        if sides >= sizes[-1]:
+            return sizes[-1]  # or should this return sides?
         return [x for x in sizes if sides < x][0]
 
     def _next_weak_value(self, sides):
         sizes = [1, 2, 4, 6, 8, 10, 12, 16, 20, 30]
-        if sides <= sizes[0]: return sizes[0]  # or should this return sides?
+        if sides <= sizes[0]:
+            return sizes[0]  # or should this return sides?
         return [x for x in sizes if sides > x][-1]
 
     def _generate_turbo_val_arrays(self, part_attackers, attack_type):
@@ -1053,22 +1084,29 @@ class LoggingBMClient:
         }
         attacker_okay_skills = self._valid_dice_for_skill(attackers,
                                                           attack_skills)
-        if not attacker_okay_skills: return False
+        if not attacker_okay_skills:
+            return False
         defender_okay_skills = self._valid_dice_for_skill(defenders,
                                                           defend_skills)
-        if not defender_okay_skills: return False
+        if not defender_okay_skills:
+            return False
         if 'Konstant' in attacker_okay_skills and len(
-            attackers) == 1: return False
+            attackers) == 1:
+            return False
         if 'Stealth' in attacker_okay_skills and len(
-            attackers) == 1: return False
+            attackers) == 1:
+            return False
         if 'Stealth' in defender_okay_skills and len(
-            attackers) == 1: return False
+            attackers) == 1:
+            return False
         num_warrior = 0
         for attacker in attackers:
             if 'Warrior' in attacker['skills']:
                 num_warrior += 1
-        if num_warrior > 1: return False
-        if num_warrior > 0 and len(attackers) == 1: return False
+        if num_warrior > 1:
+            return False
+        if num_warrior > 0 and len(attackers) == 1:
+            return False
         contributions = []
         for non_attacker in non_attackers:
             if 'Fire' in non_attacker['skills']:
@@ -1084,7 +1122,7 @@ class LoggingBMClient:
             die_contributions = [attacker['value'], ]
             if 'Konstant' in attacker['skills']:
                 die_contributions.append(-1 * attacker['value'])
-            if 'Stinger' in attacker['skills'] and not 'Warrior' in attacker[
+            if 'Stinger' in attacker['skills'] and 'Warrior' not in attacker[
                 'skills']:
                 if ',' in attacker['recipe']:
                     range_min = 2
@@ -1097,9 +1135,11 @@ class LoggingBMClient:
                         range(-1 * attacker['value'] + 1, -1 * range_min + 1))
             contributions.append(die_contributions)
         defender = defenders[0]
-        if attacker_max_sides < defender['value']: return False
+        if attacker_max_sides < defender['value']:
+            return False
         for attempt in itertools.product(*contributions):
-            if sum(attempt) == defender['value']: return True
+            if sum(attempt) == defender['value']:
+                return True
         return False
 
     def _is_valid_attack_of_type_Rush(self, attackers, defenders,
@@ -1110,8 +1150,10 @@ class LoggingBMClient:
         # in either the attacker or the defender
         mandatory_skill_found = False
         for die in attackers + defenders:
-            if 'Rush' in die['skills']: mandatory_skill_found = True
-        if not mandatory_skill_found: return False
+            if 'Rush' in die['skills']:
+                mandatory_skill_found = True
+        if not mandatory_skill_found:
+            return False
 
         attack_ok_skills = {
             'ok': [
@@ -1136,9 +1178,11 @@ class LoggingBMClient:
             'no': ['Stealth', 'Warrior', ],
         }
         if not self._valid_dice_for_skill(attackers,
-                                          attack_ok_skills): return False
+                                          attack_ok_skills):
+            return False
         if not self._valid_dice_for_skill(defenders,
-                                          defend_ok_skills): return False
+                                          defend_ok_skills):
+            return False
         defender_sum = 0
         for defender in defenders:
             defender_sum += defender['value']
@@ -1174,10 +1218,12 @@ class LoggingBMClient:
         }
         attacker_okay_skills = self._valid_dice_for_skill(attackers,
                                                           attack_skills)
-        if not attacker_okay_skills: return False
+        if not attacker_okay_skills:
+            return False
         defender_okay_skills = self._valid_dice_for_skill(defenders,
                                                           defend_skills)
-        if not defender_okay_skills: return False
+        if not defender_okay_skills:
+            return False
         defender_sum = 0
         for defender in defenders:
             defender_sum += defender['value']
@@ -1303,7 +1349,8 @@ class LoggingBMClient:
             aux_die = playerData['activeDieArray'][die_idx]
             if aux_die['sides']:
                 for other_die_idx in range(len(playerData['activeDieArray'])):
-                    if die_idx == other_die_idx: continue
+                    if die_idx == other_die_idx:
+                        continue
                     if aux_die['sides'] == \
                         playerData['activeDieArray'][other_die_idx]['sides']:
                         unique_aux_conflict = True
@@ -1312,7 +1359,8 @@ class LoggingBMClient:
                 aux_swing_type = aux_die['description'].split(' Swing Die')[0][
                     -1]
                 for other_die_idx in range(len(playerData['activeDieArray'])):
-                    if die_idx == other_die_idx: continue
+                    if die_idx == other_die_idx:
+                        continue
                     # This relies on swing letters not being reused as skill names
                     if aux_swing_type in \
                         playerData['activeDieArray'][other_die_idx]['recipe']:
@@ -1375,7 +1423,8 @@ class LoggingBMClient:
         self.record_load_game_data()
 
     def _die_fire_min(self, die):
-        if ',' in die['recipe']: return 2
+        if ',' in die['recipe']:
+            return 2
         return 1
 
     def _game_action_adjust_fire_dice_player(self, b, playerData, opponentData):
@@ -1401,8 +1450,10 @@ class LoggingBMClient:
             if 'IsAttackTarget' in die['properties']:
                 defender_sum += die['value']
         choices = ['cancel', ]
-        if len(turndown_choices) > 0: choices.append('turndown')
-        if is_power_turndown and attacker_sum >= defender_sum: choices.append(
+        if len(turndown_choices) > 0:
+            choices.append('turndown')
+        if is_power_turndown and attacker_sum >= defender_sum:
+            choices.append(
             'no_turndown')
         choice = self._random_array_element(choices)
         idx_array = []
@@ -1788,12 +1839,16 @@ class LoggingBMClient:
             found_skill_option = False
             if type(mandatory_skill) == list:
                 for mandatory_skill_option in mandatory_skill:
-                    if mandatory_skill_option in skills_in_game: found_skill_option = True
+                    if mandatory_skill_option in skills_in_game:
+                        found_skill_option = True
             else:
-                if mandatory_skill in skills_in_game: found_skill_option = True
-            if not found_skill_option: return True
+                if mandatory_skill in skills_in_game:
+                    found_skill_option = True
+            if not found_skill_option:
+                return True
         for forbidden_skill in self.reject_games['with_skill']:
-            if forbidden_skill in skills_in_game: return True
+            if forbidden_skill in skills_in_game:
+                return True
         return False
 
     def record_load_game_data(self):
@@ -1888,14 +1943,14 @@ class ButtonSelectionClient:
         KNOWN_KEYS = ['name', 'random', 'unimplemented', 'and_skills',
                       'or_skills', 'skipname', ]
         for key in sorted(criteria.keys()):
-            if not key in KNOWN_KEYS:
+            if key not in KNOWN_KEYS:
                 raise ValueError(
                     "Requested search based on key %s which is unknown" % key)
 
         options = []
         if 'name' in criteria:
             for name in criteria['name']:
-                if not name in self.button_names:
+                if name not in self.button_names:
                     raise ValueError(
                         "Requested button name %s was not found in list" % name)
             options = criteria['name']

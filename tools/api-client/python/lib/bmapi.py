@@ -53,7 +53,7 @@ except ImportError:
 class BMAPIResponse:
     def __init__(self, response_dict):
         for mandatory_arg in ['data', 'message', 'status']:
-            if not mandatory_arg in response_dict:
+            if mandatory_arg not in response_dict:
                 raise (
                     ValueError,
                     "Malformed API response is missing key '%s': %s" % (
