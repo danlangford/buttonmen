@@ -90,6 +90,7 @@ test/src/api/responderTest.php for replay tests
     self.dirname = dirname
     self.log = []
     self.num_load_game_data = 0
+    self.f = sys.stdout
 
   def find_games(self):
     games = []
@@ -104,11 +105,8 @@ test/src/api/responderTest.php for replay tests
     self.log = pickle.load(f)
     self.num_load_game_data = 0
     f.close()
-    self.f = sys.stdout
     for entry in self.log:
       self._write_log_entry(entry)
-    if self.f != sys.stdout:
-      self.f.close()
 
   def _write_log_entry(self, entry):
     write_function = '_write_entry_type_%s' % entry['type']

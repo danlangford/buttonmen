@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-# CREATE_GAME
-# Example script which creates games, and also prints information
-# about available buttons
-
+"""
+CREATE_GAME
+Example script which creates games, and also prints information
+about available buttons
+"""
+# TODO consider a move to argparse as optparse is deprecated
 import optparse
 import random
 import re
@@ -13,11 +15,37 @@ from builtins import input
 from lib import bmutils
 
 die_recipe_re = re.compile('^([^(]*)\(([^)]+)\)(.*)$')
+parser = optparse.OptionParser()
 
 
-# implicitly parses sys.argv
+def main():
+
+  [opts, args] = parse_args()
+
+  b = bmutils.BMClientParser(opts.config, opts.site)
+  if not b.verify_login():
+    print("Could not login")
+    sys.exit(1)
+
+  if opts.opponent:
+    create_random_game(opts.opponent, b)
+
+  elif opts.play_all or opts.play_skills:
+    play_all_opponents(opts, b)
+
+  elif opts.list_buttons:
+    buttons = b.wrap_load_button_names()
+    skillbuttons = get_buttons_with_skills(buttons, args)
+    print("Buttons found:")
+    for button in skillbuttons:
+      print("  %s: %s" % (button, buttons[button]['recipe']))
+
+  else:
+    parser.print_help()
+    sys.exit(1)
+
+
 def parse_args():
-  parser = optparse.OptionParser()
   parser.add_option(
       "-c", "--config",
       help="config file containing site parameters",
@@ -61,7 +89,7 @@ def lookup_other_players(b):
   players = []
   for player in sorted(player_info.keys()):
     if player == b.username: continue
-    if player_info[player]['status'] == 'ACTIVE':
+    if player_info[player]['status'] == "ACTIVE":
       players.append(player)
   return players
 
@@ -119,7 +147,7 @@ def create_random_game(opponent, b, players=False, usebuttons=False):
       opponent, obutton, buttons[obutton]['recipe']))
     print("  Create this game (y/n)?", )
     confirm = input()
-    if confirm.lower() in ['y', 'yes']:
+    if confirm.lower() in ["y", "yes"]:
       print(b.wrap_create_game(pbutton, obutton, opponent))
       return True
 
@@ -141,27 +169,10 @@ def play_all_opponents(opts, b):
     if player not in skip_opponents:
       print("Start game against %s?" % player, )
       confirm = input()
-      if confirm.lower() in ['y', 'yes']:
+      if confirm.lower() in ["y", "yes"]:
         create_random_game(player, b, players=players,
                            usebuttons=skillbuttons)
 
 
-########################################################################
-[opts, args] = parse_args()
-
-b = bmutils.BMClientParser(opts.config, opts.site)
-if not b.verify_login():
-  print("Could not login")
-  sys.exit(1)
-if opts.opponent:
-  create_random_game(opts.opponent, b)
-
-elif opts.play_all or opts.play_skills:
-  play_all_opponents(opts, b)
-
-elif opts.list_buttons:
-  buttons = b.wrap_load_button_names()
-  skillbuttons = get_buttons_with_skills(buttons, args)
-  print("Buttons found:")
-  for button in skillbuttons:
-    print("  %s: %s" % (button, buttons[button]['recipe']))
+if __name__ == "__main__":
+  main()

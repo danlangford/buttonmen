@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
 import argparse
+# noinspection PyCompatibility
 import configparser
 import os
 import sys
@@ -69,13 +70,13 @@ def parse_arguments():
 #
 # Print the overall record of a thing.
 
-def print_record(bmconn, type, thing):
+def print_record(bmconn, kind, thing):
   apicmd = {'type': 'searchGameHistory',
             'sortColumn': 'lastMove',
             'sortDirection': 'DESC',
             'numberOfResults': 20,
             'page': 1,
-            type + 'NameA': thing,
+            kind + 'NameA': thing,
             'status': 'COMPLETE'}
 
   result = bmconn._make_request(apicmd)

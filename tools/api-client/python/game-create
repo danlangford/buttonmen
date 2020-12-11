@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-
-# GAME-CREATE
-#
-# Create a game between two named players playing two named buttons.
+"""
+GAME-CREATE
+Create a game between two named players playing two named buttons.
+"""
 
 # IMPORTS
 

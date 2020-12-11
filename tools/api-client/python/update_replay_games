@@ -10,7 +10,7 @@
 
 import sys
 
-import random_ai
+from lib import random_ai
 
 
 ########################################################################

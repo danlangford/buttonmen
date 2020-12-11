@@ -79,14 +79,14 @@ def parse_arguments():
 #
 # Print the record between two things.
 
-def print_record(bmconn, type, thing1, thing2):
+def print_record(bmconn, kind, thing1, thing2):
   apicmd = {'type': 'searchGameHistory',
             'sortColumn': 'lastMove',
             'sortDirection': 'DESC',
             'numberOfResults': 20,
             'page': 1,
-            type + 'NameA': thing1,
-            type + 'NameB': thing2,
+            kind + 'NameA': thing1,
+            kind + 'NameB': thing2,
             'status': 'COMPLETE'}
 
   result = bmconn._make_request(apicmd)

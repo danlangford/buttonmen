@@ -6,8 +6,8 @@ import sys
 
 CONFIGPATH = "%s/share/buttonmen/.bmrc" % os.getenv('HOME')
 
-import bmapi
-import random_ai
+from lib import bmapi
+from lib import random_ai
 import time
 
 
