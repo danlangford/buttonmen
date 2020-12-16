@@ -24,7 +24,7 @@ from lib import bmutils
 
 def parse_arguments():
   parser = argparse.ArgumentParser(
-      description="Create a game between two players with two buttons and a description.")
+    description="Create a game between two players with two buttons and a description.")
 
   parser.add_argument('--player', default='',
                       help="one player (yourself by default)")

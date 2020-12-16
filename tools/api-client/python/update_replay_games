@@ -36,5 +36,5 @@ DIRNAME = sys.argv[1]
 d = PHPBMClientOutputWriter(DIRNAME)
 for gamepath in d.find_games():
   sys.stderr.write(
-      "Updating and prepping game for replay from: %s\n" % gamepath)
+    "Updating and prepping game for replay from: %s\n" % gamepath)
   d.translate_game(gamepath)

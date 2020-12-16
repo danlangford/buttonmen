@@ -25,7 +25,7 @@ class LoggingBMClient(random_ai.LoggingBMClient):
 # Initial setup
 if len(sys.argv) < 2:
   raise ValueError(
-      "Usage: test_log_games <play_games> [<b1_criteria>] [<b2_criteria>]")
+    "Usage: test_log_games <play_games> [<b1_criteria>] [<b2_criteria>]")
 
 nextarg = 1
 N_GAMES = int(sys.argv[nextarg])

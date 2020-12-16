@@ -8,7 +8,7 @@
 
 # Import stuff from the future.
 from __future__ import absolute_import, division, print_function, \
-    unicode_literals
+  unicode_literals
 
 import configparser
 import json
@@ -59,6 +59,8 @@ class BMClient:
     self.cookiejar = LWPCookieJar(self.cookiefile)
     if os.path.isfile(self.cookiefile):
       self.cookiejar.load(ignore_discard=True)
+    self.session = requests.session()
+    self.session.cookies = self.cookiejar
 
   def __init__(self, rcfile, site):
     self.username = None
@@ -72,8 +74,9 @@ class BMClient:
     headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
     }
-    response = requests.post(url=self.url, data=json.dumps(args),
-                             headers=headers, cookies=self.cookiejar, )
+    response = self.session.post(url=self.url, data=json.dumps(args),
+                             headers=headers,)
+
     try:
       retval = response.json()
       return BMAPIResponse(retval)
@@ -138,7 +141,7 @@ class BMClient:
     return self._make_request(args)
 
   def create_game(self, pbutton, obutton='', player='', opponent='',
-      description='', max_wins=3, use_prev_game=False):
+    description='', max_wins=3, use_prev_game=False):
     if player is None or player == '':
       player = self.username
     if not obutton:
@@ -159,7 +162,7 @@ class BMClient:
     return self._make_request(args)
 
   def submit_turn(self, gameId, attackerIdx, defenderIdx, dieSelectStatus,
-      attackType, roundNumber, timestamp, turboVals, chat=''):
+    attackType, roundNumber, timestamp, turboVals, chat=''):
     args = {
       'type': 'submitTurn',
       'game': gameId,
@@ -176,7 +179,7 @@ class BMClient:
     return self._make_request(args)
 
   def submit_die_values(self, gameId, swingArray, optionArray, roundNumber,
-      timestamp):
+    timestamp):
     args = {
       'type': 'submitDieValues',
       'game': gameId,
@@ -192,7 +195,7 @@ class BMClient:
     return self._make_request(args)
 
   def react_to_initiative(self, gameId, action, idxArray, valueArray,
-      roundNumber, timestamp):
+    roundNumber, timestamp):
     args = {
       'type': 'reactToInitiative',
       'game': gameId,
@@ -205,7 +208,7 @@ class BMClient:
     return self._make_request(args)
 
   def adjust_fire_dice(self, gameId, action, idxArray, valueArray,
-      roundNumber, timestamp):
+    roundNumber, timestamp):
     args = {
       'type': 'adjustFire',
       'game': gameId,

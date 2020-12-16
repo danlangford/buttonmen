@@ -24,7 +24,7 @@ from lib import bmutils
 
 def parse_arguments():
   parser = argparse.ArgumentParser(
-      description="Show a list of buttons who have a set of skills.")
+    description="Show a list of buttons who have a set of skills.")
 
   parser.add_argument('skills',
                       nargs='*',

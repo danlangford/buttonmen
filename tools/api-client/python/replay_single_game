@@ -24,7 +24,7 @@ SLEEPSECS = 60
 
 # e.g. 390b58027049ef07562b17ff9503471d0f2aae38.games.20160205.163427.tar.bz2
 GAMEFILE_RE = re.compile(
-    '^([0-9a-f]{40})\.games\.([0-9]{8}\.[0-9]{6})\.tar\.bz2$')
+  '^([0-9a-f]{40})\.games\.([0-9]{8}\.[0-9]{6})\.tar\.bz2$')
 
 ORIGDIR = os.getcwd()
 HOMEBMDIR = "%s/src/buttonmen" % ORIGDIR

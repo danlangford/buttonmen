@@ -112,7 +112,7 @@ test/src/api/responderTest.php for replay tests
     write_function = '_write_entry_type_%s' % entry['type']
     if not hasattr(self, write_function):
       raise ValueError(
-          "Don't know how to write entry of type %s" % entry['type'])
+        "Don't know how to write entry of type %s" % entry['type'])
     getattr(self, write_function)(entry)
 
   def _write_entry_type_bug(self, entry):
@@ -143,8 +143,8 @@ test/src/api/responderTest.php for replay tests
 
   def _write_entry_type_login(self, entry):
     self.f.write(
-        "\n        $_SESSION = $this->mock_test_user_login('%s');" % entry[
-          'user'])
+      "\n        $_SESSION = $this->mock_test_user_login('%s');" % entry[
+        'user'])
 
   def _write_entry_type_createGame(self, entry):
     # Random skills may be selected during game creation, so use a dict-style randstr
@@ -219,9 +219,9 @@ test/src/api/responderTest.php for replay tests
   def _write_entry_type_adjustFire(self, entry):
     randstr = self._php_rand_str(entry['retval'])
     php_idx_str = 'array(%s)' % (
-        ", ".join([str(i) for i in entry['idx_array']]) or "")
+      ", ".join([str(i) for i in entry['idx_array']]) or "")
     php_value_str = 'array(%s)' % (
-        ", ".join(["'%s'" % v for v in entry['value_array']]) or "")
+      ", ".join(["'%s'" % v for v in entry['value_array']]) or "")
     self.f.write("""
         $this->verify_api_adjustFire(
             %s,
@@ -234,9 +234,9 @@ test/src/api/responderTest.php for replay tests
   def _write_entry_type_reactToInitiative(self, entry):
     randstr = self._php_rand_str(entry['retval'])
     php_idx_str = 'array(%s)' % (
-        ", ".join([str(i) for i in entry['idx_array']]) or "")
+      ", ".join([str(i) for i in entry['idx_array']]) or "")
     php_value_str = 'array(%s)' % (
-        ", ".join(["'%s'" % v for v in entry['value_array']]) or "")
+      ", ".join(["'%s'" % v for v in entry['value_array']]) or "")
     self.f.write("""
         $this->verify_api_reactToInitiative(
             %s,
@@ -252,9 +252,9 @@ test/src/api/responderTest.php for replay tests
     php_swing_array = []
     if entry['swing_array']:
       for swing_type, swing_choice in sorted(
-          entry['swing_array'].items()):
+        entry['swing_array'].items()):
         php_swing_array.append(
-            "'%s' => %d" % (swing_type, swing_choice))
+          "'%s' => %d" % (swing_type, swing_choice))
       php_swing_str = 'array(%s)' % ', '.join(php_swing_array)
     else:
       php_swing_str = 'NULL'
@@ -262,9 +262,9 @@ test/src/api/responderTest.php for replay tests
     php_option_array = []
     if entry['option_array']:
       for str_option_idx, option_choice in sorted(
-          entry['option_array'].items()):
+        entry['option_array'].items()):
         php_option_array.append(
-            "%s => %s" % (str_option_idx, option_choice))
+          "%s => %s" % (str_option_idx, option_choice))
       php_option_str = 'array(%s)' % ', '.join(php_option_array)
     else:
       php_option_str = 'NULL'
@@ -280,12 +280,12 @@ test/src/api/responderTest.php for replay tests
   def _write_entry_type_submitTurn(self, entry):
     randstr = self._php_rand_str(entry['retval'])
     [attack, php_attack_str] = self._generate_php_attack_arrays(
-        entry['attacker_indices'], entry['defender_indices'],
-        entry['all_attackers'], entry['all_defenders'],
-        entry['attacker'], entry['defender'])
+      entry['attacker_indices'], entry['defender_indices'],
+      entry['all_attackers'], entry['all_defenders'],
+      entry['attacker'], entry['defender'])
     php_turbo_vals = 'array(%s)' % ', '.join(
-        ['%s => %s' % (k, v) for k, v in
-         sorted(entry['turbo_vals'].items())])
+      ['%s => %s' % (k, v) for k, v in
+       sorted(entry['turbo_vals'].items())])
     self.f.write("""
         $this->verify_api_submitTurn(
             %s,
@@ -321,7 +321,7 @@ test/src/api/responderTest.php for replay tests
     skill_randstr = ""
     if retval.skill_rand_vals:
       skill_randstr = ", ".join(
-          [str(val) for val in retval.skill_rand_vals])
+        [str(val) for val in retval.skill_rand_vals])
     return "array('bm_rand' => array(%s), 'bm_skill_rand' => array(%s))" % (
       randstr, skill_randstr)
 
@@ -334,7 +334,7 @@ test/src/api/responderTest.php for replay tests
   def _write_php_diff_numeric_key(self, suffix, newval, oldval):
     if newval != oldval:
       self.f.write(
-          "        $expData%s = %s;\n" % (suffix, json.dumps(newval)))
+        "        $expData%s = %s;\n" % (suffix, json.dumps(newval)))
 
   def _write_php_diff_string_key(self, suffix, newval, oldval):
     if newval != oldval:
@@ -363,25 +363,25 @@ test/src/api/responderTest.php for replay tests
       oldkey = len(oldval) - 1
       while oldkey >= 0:
         if newval[nextkey]['player'] == oldval[oldkey]['player'] \
-            and newval[nextkey]['message'] == oldval[oldkey]['message']:
+          and newval[nextkey]['message'] == oldval[oldkey]['message']:
           matches_found = True
           nextkey -= 1
           oldkey -= 1
         elif matches_found:
           self.f.write(
-              "        $expData['gameActionLog'] = array();\n")
+            "        $expData['gameActionLog'] = array();\n")
           nextkey = len(newval) - 1
           break
         else:
           self.f.write(
-              "        array_pop($expData['gameActionLog']);\n")
+            "        array_pop($expData['gameActionLog']);\n")
           oldkey -= 1
 
     while nextkey >= 0:
       self.f.write(
-          "        array_unshift($expData['gameActionLog'], array('timestamp' => 'TIMESTAMP', 'player' => '%s', 'message' => '%s'));\n" % (
-            newval[nextkey]['player'],
-            newval[nextkey]['message'].replace("'", "\\'")))
+        "        array_unshift($expData['gameActionLog'], array('timestamp' => 'TIMESTAMP', 'player' => '%s', 'message' => '%s'));\n" % (
+          newval[nextkey]['player'],
+          newval[nextkey]['message'].replace("'", "\\'")))
       nextkey -= 1
 
   def _write_php_diff_flat_array_key(self, suffix, newval, oldval):
@@ -402,7 +402,7 @@ test/src/api/responderTest.php for replay tests
         suffix, ', '.join(newvals)))
 
   def _write_php_diff_flat_dict_key(self, suffix, newval, oldval,
-      quotevals=False):
+    quotevals=False):
     if newval != oldval:
       if newval:
         if not type(newval) == dict:
@@ -413,7 +413,7 @@ test/src/api/responderTest.php for replay tests
             valstr = '"%s"' % value
           elif type(value) == list:
             valstr = 'array(%s)' % ", ".join(
-                [str(v) for v in value])
+              [str(v) for v in value])
           else:
             valstr = value
           newvals.append('"%s" => %s' % (key, valstr))
@@ -429,8 +429,8 @@ test/src/api/responderTest.php for replay tests
       self._write_php_diff_flat_array_key(suffix, newval, oldval)
     else:
       raise ValueError(
-          "%s => %s: unexpectedly neither an array nor a dict" % (
-            suffix, newval))
+        "%s => %s: unexpectedly neither an array nor a dict" % (
+          suffix, newval))
 
   def _write_php_diff_opt_request_array(self, suffix, newval, oldval):
     # optRequestArray gets encoded in a somewhat inconsistent way
@@ -446,8 +446,8 @@ test/src/api/responderTest.php for replay tests
       else:
         self.f.write("        $expData%s = array(%s);\n" % (
           suffix, ', '.join(
-              ['array(%s)' % (', '.join([str(subv) for subv in v]))
-               for v in newval])))
+            ['array(%s)' % (', '.join([str(subv) for subv in v]))
+             for v in newval])))
 
   def _write_php_diff_game_skills_info(self, suffix, newval, oldval):
     if newval != oldval:
@@ -456,11 +456,11 @@ test/src/api/responderTest.php for replay tests
       else:
         newarr = newval
       self.f.write(
-          "        $expData%s =  $this->get_skill_info(array(%s));\n" % (
-            suffix, ', '.join(newarr)))
+        "        $expData%s =  $this->get_skill_info(array(%s));\n" % (
+          suffix, ', '.join(newarr)))
 
   def _write_php_diff_player_data_die_array(self, pnum, pkey, newdice,
-      olddice):
+    olddice):
     # TODO: try to figure out whether a die has been spliced out of the array due to capture
     for dnum in range(len(newdice)):
       newdie = newdice[dnum]
@@ -500,8 +500,8 @@ test/src/api/responderTest.php for replay tests
           raise ValueError("%s => %s" % (dkey, newdie[dkey]))
     for dnum in range(len(olddice) - len(newdice)):
       self.f.write(
-          "        array_pop($expData['playerDataArray'][%d]['%s']);\n" % (
-            pnum, pkey))
+        "        array_pop($expData['playerDataArray'][%d]['%s']);\n" % (
+          pnum, pkey))
 
   def _write_php_diff_player_data_array(self, key, pnum, newdata, olddata):
     for pkey in sorted(olddata.keys()):
@@ -537,8 +537,8 @@ test/src/api/responderTest.php for replay tests
       elif pkey in UNUSED_DURING_AUTOPLAY_KEYS:
         if newdata[pkey] != olddata[pkey]:
           self.bug(
-              "Playerdata key %s is expected to be static, but unexpectedly changed between loadGameData invocations: %s => %s" % (
-                pkey, olddata[pkey], newdata[pkey]))
+            "Playerdata key %s is expected to be static, but unexpectedly changed between loadGameData invocations: %s => %s" % (
+              pkey, olddata[pkey], newdata[pkey]))
       elif pkey == 'lastActionTime':
         pass
       else:
@@ -558,8 +558,8 @@ test/src/api/responderTest.php for replay tests
       elif key in UNUSED_DURING_AUTOPLAY_KEYS:
         if newobj[key] != oldobj[key]:
           self.bug(
-              "Key %s is expected to be static, but unexpectedly changed between loadGameData invocations: %s => %s" % (
-                key, oldobj[key], newobj[key]))
+            "Key %s is expected to be static, but unexpectedly changed between loadGameData invocations: %s => %s" % (
+              key, oldobj[key], newobj[key]))
       elif key == 'playerDataArray':
         for pnum in range(len(newobj[key])):
           self._write_php_diff_player_data_array(key, pnum,
@@ -580,8 +580,8 @@ test/src/api/responderTest.php for replay tests
     return retval.message.replace("'", "\\'")
 
   def _generate_php_attack_arrays(
-      self, part_attackers, part_defenders, all_attackers, all_defenders,
-      attacker, defender):
+    self, part_attackers, part_defenders, all_attackers, all_defenders,
+    attacker, defender):
     attack = {}
     php_array_parts = []
     for i in range(len(all_attackers)):
@@ -654,7 +654,7 @@ taking legal game actions randomly.
     return [x for x in itertools.combinations(range(list_len), combo_len)]
 
   def _look_for_attacker_defender_combo(self, attacker_dice, defender_dice,
-      n_att, n_def, validate_fn):
+    n_att, n_def, validate_fn):
     attacker_combos = self._list_all_idx_combos(len(attacker_dice), n_att)
     defender_combos = self._list_all_idx_combos(len(defender_dice), n_def)
     random.shuffle(attacker_combos)
@@ -675,14 +675,14 @@ taking legal game actions randomly.
     return False
 
   def _find_attacker_defender_combo(self, attacker_dice, defender_dice, n_att,
-      n_def, validate_fn):
+    n_def, validate_fn):
     retval = self._look_for_attacker_defender_combo(attacker_dice,
                                                     defender_dice, n_att,
                                                     n_def, validate_fn)
     if not retval:
       self.bug(
-          "Could not find valid attack with function=%s, attackers=%s, defenders=%s" % (
-            validate_fn, attacker_dice, defender_dice))
+        "Could not find valid attack with function=%s, attackers=%s, defenders=%s" % (
+          validate_fn, attacker_dice, defender_dice))
     return retval
 
   def _player_with_initiative_from_values(self, player_vals, opponent_vals):
@@ -732,7 +732,7 @@ taking legal game actions randomly.
         continue
       opponent_initiative_values.append(die['value'])
     return self._player_with_initiative_from_values(
-        player_initiative_values, opponent_initiative_values) == 0
+      player_initiative_values, opponent_initiative_values) == 0
 
   def _valid_dice_for_skill(self, dice, okay_skills):
     all_skills = []
@@ -752,8 +752,8 @@ taking legal game actions randomly.
           continue
         if skill not in okay_skills['ok']:
           self.bug(
-              "Skill %s found in die %s is not defined in okay_skills array %s" % (
-                skill, die, okay_skills))
+            "Skill %s found in die %s is not defined in okay_skills array %s" % (
+              skill, die, okay_skills))
       if not skill_found:
         return False
       if 'Dizzy' in die['properties']:
@@ -761,7 +761,7 @@ taking legal game actions randomly.
     return all_skills
 
   def _is_valid_attack_of_type_Berserk(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     attack_skills = {
       'mandatory': ['Berserk', ],
       'ok': [
@@ -802,7 +802,7 @@ taking legal game actions randomly.
     return attacker['value'] == defender_sum
 
   def _is_valid_attack_of_type_Boom(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     attack_skills = {
       'mandatory': ['Boom', ],
       'ok': [
@@ -838,7 +838,7 @@ taking legal game actions randomly.
     return True
 
   def _is_valid_attack_of_type_Power(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     attack_skills = {
       'ok': [
         'Berserk', 'Boom', 'Chance', 'Doppelganger', 'Focus',
@@ -882,12 +882,12 @@ taking legal game actions randomly.
       'value'] % 2 == 1:
       return False
     if (attacker['value'] + available_fire) >= defender['value'] \
-        and int(attacker['sides']) >= defender['value']:
+      and int(attacker['sides']) >= defender['value']:
       return True
     return False
 
   def _is_valid_attack_of_type_Shadow(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     attack_skills = {
       'mandatory': ['Queer', 'Shadow', ],
       'ok': [
@@ -938,7 +938,7 @@ taking legal game actions randomly.
     return False
 
   def _is_valid_attack_of_type_Trip(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     attack_skills = {
       'mandatory': ['Trip', ],
       'ok': [
@@ -994,7 +994,7 @@ taking legal game actions randomly.
         swing_size = die['recipe'].split(',')[1].split(')')[0]
         if swing_size not in SWING_RANGES:
           raise ValueError(
-              "Could not figure out turbo trip die: %s" % die)
+            "Could not figure out turbo trip die: %s" % die)
         post_trip_sides = SWING_RANGES[swing_size][-1]
         if ',' in die['recipe']:
           post_trip_sides *= 2
@@ -1053,7 +1053,7 @@ taking legal game actions randomly.
     return turbovals
 
   def _is_valid_attack_of_type_Skill(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     self.debug_skill_tries.append("ATT=%s, DEF=%s" % (attackers, defenders))
     attack_skills = {
       'ok': [
@@ -1089,13 +1089,13 @@ taking legal game actions randomly.
     if not defender_okay_skills:
       return False
     if 'Konstant' in attacker_okay_skills and len(
-        attackers) == 1:
+      attackers) == 1:
       return False
     if 'Stealth' in attacker_okay_skills and len(
-        attackers) == 1:
+      attackers) == 1:
       return False
     if 'Stealth' in defender_okay_skills and len(
-        attackers) == 1:
+      attackers) == 1:
       return False
     num_warrior = 0
     for attacker in attackers:
@@ -1127,10 +1127,10 @@ taking legal game actions randomly.
         else:
           range_min = 1
         die_contributions.extend(
-            range(range_min, attacker['value'] + 1))
+          range(range_min, attacker['value'] + 1))
         if 'Konstant' in attacker['skills']:
           die_contributions.extend(
-              range(-1 * attacker['value'] + 1, -1 * range_min + 1))
+            range(-1 * attacker['value'] + 1, -1 * range_min + 1))
       contributions.append(die_contributions)
     defender = defenders[0]
     if attacker_max_sides < defender['value']:
@@ -1141,7 +1141,7 @@ taking legal game actions randomly.
     return False
 
   def _is_valid_attack_of_type_Rush(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     # Logic here is a little different than some of the other skill checkers.
     # We need to check that the mandatory skill appears in *at least one of*
     # the attacker or the defender, and also that no forbidden skills appear
@@ -1188,7 +1188,7 @@ taking legal game actions randomly.
     return attacker['value'] == defender_sum
 
   def _is_valid_attack_of_type_Speed(self, attackers, defenders,
-      non_attackers):
+    non_attackers):
     attack_skills = {
       'mandatory': ['Speed', ],
       'ok': [
@@ -1248,87 +1248,87 @@ taking legal game actions randomly.
     return attack
 
   def _game_action_start_turn_find_attack_Berserk(self, b, attackerData,
-      defenderData):
+    defenderData):
     num_defenders = range(1, len(defenderData['activeDieArray']) + 1)
     random.shuffle(num_defenders)
     while len(num_defenders) > 0:
       n_def = num_defenders.pop()
       retval = self._look_for_attacker_defender_combo(
-          attackerData['activeDieArray'], defenderData['activeDieArray'],
-          1, n_def,
-          self._is_valid_attack_of_type_Berserk)
+        attackerData['activeDieArray'], defenderData['activeDieArray'],
+        1, n_def,
+        self._is_valid_attack_of_type_Berserk)
       if retval:
         return retval
     self.bug("Could not find valid berserk attack")
 
   def _game_action_start_turn_find_attack_Boom(self, b, attackerData,
-      defenderData):
+    defenderData):
     return self._find_attacker_defender_combo(
-        attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
-        1,
-        self._is_valid_attack_of_type_Boom)
+      attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
+      1,
+      self._is_valid_attack_of_type_Boom)
 
   def _game_action_start_turn_find_attack_Pass(self, b, attackerData,
-      defenderData):
+    defenderData):
     return [[], [], ]
 
   def _game_action_start_turn_find_attack_Power(self, b, attackerData,
-      defenderData):
+    defenderData):
     return self._find_attacker_defender_combo(
-        attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
-        1,
-        self._is_valid_attack_of_type_Power)
+      attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
+      1,
+      self._is_valid_attack_of_type_Power)
 
   def _game_action_start_turn_find_attack_Rush(self, b, attackerData,
-      defenderData):
+    defenderData):
     return self._find_attacker_defender_combo(
-        attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
-        2,
-        self._is_valid_attack_of_type_Rush)
+      attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
+      2,
+      self._is_valid_attack_of_type_Rush)
 
   def _game_action_start_turn_find_attack_Shadow(self, b, attackerData,
-      defenderData):
+    defenderData):
     return self._find_attacker_defender_combo(
-        attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
-        1,
-        self._is_valid_attack_of_type_Shadow)
+      attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
+      1,
+      self._is_valid_attack_of_type_Shadow)
 
   def _game_action_start_turn_find_attack_Skill(self, b, attackerData,
-      defenderData):
+    defenderData):
     self.debug_skill_tries = []
     num_attackers = range(1, len(attackerData['activeDieArray']) + 1)
     random.shuffle(num_attackers)
     while len(num_attackers) > 0:
       n_att = num_attackers.pop()
       retval = self._look_for_attacker_defender_combo(
-          attackerData['activeDieArray'], defenderData['activeDieArray'],
-          n_att, 1,
-          self._is_valid_attack_of_type_Skill)
+        attackerData['activeDieArray'], defenderData['activeDieArray'],
+        n_att, 1,
+        self._is_valid_attack_of_type_Skill)
       if retval:
         return retval
     self.bug("Could not find valid skill attack: tried: %s" % "\n".join(
-        self.debug_skill_tries))
+      self.debug_skill_tries))
 
   def _game_action_start_turn_find_attack_Speed(self, b, attackerData,
-      defenderData):
+    defenderData):
     num_defenders = range(1, len(defenderData['activeDieArray']) + 1)
     random.shuffle(num_defenders)
     while len(num_defenders) > 0:
       n_def = num_defenders.pop()
       retval = self._look_for_attacker_defender_combo(
-          attackerData['activeDieArray'], defenderData['activeDieArray'],
-          1, n_def,
-          self._is_valid_attack_of_type_Speed)
+        attackerData['activeDieArray'], defenderData['activeDieArray'],
+        1, n_def,
+        self._is_valid_attack_of_type_Speed)
       if retval:
         return retval
     self.bug("Could not find valid speed attack")
 
   def _game_action_start_turn_find_attack_Trip(self, b, attackerData,
-      defenderData):
+    defenderData):
     return self._find_attacker_defender_combo(
-        attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
-        1,
-        self._is_valid_attack_of_type_Trip)
+      attackerData['activeDieArray'], defenderData['activeDieArray'], 1,
+      1,
+      self._is_valid_attack_of_type_Trip)
 
   def _game_action_choose_auxiliary_dice_player(self, b, playerData):
     auxiliary_choices = []
@@ -1339,8 +1339,8 @@ taking legal game actions randomly.
         auxiliary_choices.append(die_idx)
     if len(auxiliary_choices) != 1:
       self.bug(
-          "In choose_auxiliary_dice for %s with wrong number of auxiliary dice to choose: %s" % (
-            b.username, playerData))
+        "In choose_auxiliary_dice for %s with wrong number of auxiliary dice to choose: %s" % (
+          b.username, playerData))
     unique_swing_among_dice = playerData['button']['name'] == 'Gordo'
     if unique_swing_among_dice:
       unique_aux_conflict = False
@@ -1350,7 +1350,7 @@ taking legal game actions randomly.
           if die_idx == other_die_idx:
             continue
           if aux_die['sides'] == \
-              playerData['activeDieArray'][other_die_idx]['sides']:
+            playerData['activeDieArray'][other_die_idx]['sides']:
             unique_aux_conflict = True
       else:
         # There's no clean way to figure out a die's swing type from the API data, so just use something fast
@@ -1361,7 +1361,7 @@ taking legal game actions randomly.
             continue
           # This relies on swing letters not being reused as skill names
           if aux_swing_type in \
-              playerData['activeDieArray'][other_die_idx]['recipe']:
+            playerData['activeDieArray'][other_die_idx]['recipe']:
             unique_aux_conflict = True
       if unique_aux_conflict:
         choices.remove('add')
@@ -1375,9 +1375,9 @@ taking legal game actions randomly.
     retval = b.choose_auxiliary_dice(self.game_id, action, die_idx)
     if not (retval and retval.status == 'ok'):
       self.bug(
-          "API choose_auxiliary_dice(%s, %s, %s) unexpectedly failed: %s" % (
-            self.game_id, action, die_idx,
-            retval and retval.message or "NULL"))
+        "API choose_auxiliary_dice(%s, %s, %s) unexpectedly failed: %s" % (
+          self.game_id, action, die_idx,
+          retval and retval.message or "NULL"))
     self._add_php_pre_action_block(b)
     self.log.append({
       'type': 'reactToAuxiliary',
@@ -1396,8 +1396,8 @@ taking legal game actions randomly.
         reserve_choices.append(die_idx)
     if len(reserve_choices) == 0:
       self.bug(
-          "In choose_reserve_dice for %s with no reserve dice to choose: %s" % (
-            b.username, playerData))
+        "In choose_reserve_dice for %s with no reserve dice to choose: %s" % (
+          b.username, playerData))
     action = self._random_array_element(choices)
     die_idx = None
     choice = [action, ]
@@ -1408,9 +1408,9 @@ taking legal game actions randomly.
     retval = b.choose_reserve_dice(self.game_id, action, die_idx)
     if not (retval and retval.status == 'ok'):
       self.bug(
-          "API choose_reserve_dice(%s, %s, %s) unexpectedly failed: %s" % (
-            self.game_id, action, die_idx,
-            retval and retval.message or "NULL"))
+        "API choose_reserve_dice(%s, %s, %s) unexpectedly failed: %s" % (
+          self.game_id, action, die_idx,
+          retval and retval.message or "NULL"))
     self._add_php_pre_action_block(b)
     self.log.append({
       'type': 'reactToReserve',
@@ -1440,7 +1440,7 @@ taking legal game actions randomly.
         if 'Konstant' in die['skills']:
           konstant_values.append(die['value'])
       elif 'Fire' in die['skills'] and die['value'] > self._die_fire_min(
-          die):
+        die):
         turndown_choices.append(die_idx)
         turndown_avail += die['value'] - self._die_fire_min(die)
     defender_sum = 0
@@ -1452,7 +1452,7 @@ taking legal game actions randomly.
       choices.append('turndown')
     if is_power_turndown and attacker_sum >= defender_sum:
       choices.append(
-          'no_turndown')
+        'no_turndown')
     choice = self._random_array_element(choices)
     idx_array = []
     value_array = []
@@ -1463,7 +1463,7 @@ taking legal game actions randomly.
         min_needed = max(1, defender_sum - attacker_sum)
         max_needed = min(attacker_sides - attacker_sum, turndown_avail)
         still_needed = self._random_array_element(
-            range(min_needed, max_needed + 1))
+          range(min_needed, max_needed + 1))
       else:
         while defender_sum < attacker_sum and len(konstant_values) > 0:
           konstant_choice = konstant_values.pop()
@@ -1476,7 +1476,7 @@ taking legal game actions randomly.
                                playerData['activeDieArray'][die_idx][
                                  'value'])
         if turndown_to[die_idx] > self._die_fire_min(
-            playerData['activeDieArray'][die_idx]):
+          playerData['activeDieArray'][die_idx]):
           turndown_to[die_idx] -= 1
           still_needed -= 1
       for [die_idx, die_value] in sorted(turndown_to.items()):
@@ -1484,15 +1484,15 @@ taking legal game actions randomly.
         value_array.append(die_value)
     b.login()
     retval = b.adjust_fire_dice(
-        self.game_id, choice, idx_array, value_array,
-        self.loaded_data['roundNumber'], self.loaded_data['timestamp'])
+      self.game_id, choice, idx_array, value_array,
+      self.loaded_data['roundNumber'], self.loaded_data['timestamp'])
     if not (retval and retval.status == 'ok'):
       self.bug(
-          "API adjust_fire_dice(%s, %s, %s, %s, %s, %s) unexpectedly failed: %s" % (
-            self.game_id, choice, idx_array, value_array,
-            self.loaded_data['roundNumber'],
-            self.loaded_data['timestamp'],
-            retval and retval.message or "NULL"))
+        "API adjust_fire_dice(%s, %s, %s, %s, %s, %s) unexpectedly failed: %s" % (
+          self.game_id, choice, idx_array, value_array,
+          self.loaded_data['roundNumber'],
+          self.loaded_data['timestamp'],
+          retval and retval.message or "NULL"))
     self._add_php_pre_action_block(b)
     self.log.append({
       'type': 'adjustFire',
@@ -1506,7 +1506,7 @@ taking legal game actions randomly.
     self.record_load_game_data()
 
   def _game_action_react_to_initiative_player(self, b, playerData,
-      opponentData):
+    opponentData):
     focus_choices = []
     chance_choices = []
     for die_idx in range(len(playerData['activeDieArray'])):
@@ -1518,13 +1518,13 @@ taking legal game actions randomly.
     choices = ['decline', ]
     if len(focus_choices) > 0:
       if self._can_gain_initiative_using_focus_dice(
-          playerData['activeDieArray'], opponentData['activeDieArray']):
+        playerData['activeDieArray'], opponentData['activeDieArray']):
         choices.append('focus')
     if len(chance_choices) > 0:
       choices.append('chance')
     if len(choices) == 1:
       self.bug(
-          "In REACT_TO_INITIATIVE, but decline is the only valid choice")
+        "In REACT_TO_INITIATIVE, but decline is the only valid choice")
     choice = self._random_array_element(choices)
     idx_array = []
     value_array = []
@@ -1539,15 +1539,15 @@ taking legal game actions randomly.
         value_array.append('1')  # FIXME: won't work for focus twin
     b.login()
     retval = b.react_to_initiative(
-        self.game_id, choice, idx_array, value_array,
-        self.loaded_data['roundNumber'], self.loaded_data['timestamp'])
+      self.game_id, choice, idx_array, value_array,
+      self.loaded_data['roundNumber'], self.loaded_data['timestamp'])
     if not (retval and retval.status == 'ok'):
       self.bug(
-          "API react_to_initiative(%s, %s, %s, %s, %s, %s) unexpectedly failed: %s" % (
-            self.game_id, choice, idx_array, value_array,
-            self.loaded_data['roundNumber'],
-            self.loaded_data['timestamp'],
-            retval and retval.message or "NULL"))
+        "API react_to_initiative(%s, %s, %s, %s, %s, %s) unexpectedly failed: %s" % (
+          self.game_id, choice, idx_array, value_array,
+          self.loaded_data['roundNumber'],
+          self.loaded_data['timestamp'],
+          retval and retval.message or "NULL"))
     self._add_php_pre_action_block(b)
     self.log.append({
       'type': 'reactToInitiative',
@@ -1570,18 +1570,18 @@ taking legal game actions randomly.
         [swing_min, swing_max] = playerData['swingRequestArray'][
           swing_type]
         swing_choice = self._random_array_element(
-            range(swing_min, swing_max + 1))
+          range(swing_min, swing_max + 1))
         # N.B. These loops shouldn't get stuck because Gordo has only 5 dice (so 6 with an aux),
         # and the most constrained swing type, V, has 7 > 6 choices
         if unique_swing_among_swing:
           while swing_choice in swing_array.values():
             swing_choice = self._random_array_element(
-                range(swing_min, swing_max + 1))
+              range(swing_min, swing_max + 1))
         if unique_swing_among_dice:
           while swing_choice in [die['sides'] for die in playerData[
             'activeDieArray']] + swing_array.values():
             swing_choice = self._random_array_element(
-                range(swing_min, swing_max + 1))
+              range(swing_min, swing_max + 1))
         swing_array[swing_type] = swing_choice
 
     option_array = {}
@@ -1589,12 +1589,12 @@ taking legal game actions randomly.
       if type(playerData['optRequestArray']) == dict:
         for option_idx in sorted(playerData['optRequestArray'].keys()):
           option_choice = str(self._random_array_element(
-              playerData['optRequestArray'][option_idx]))
+            playerData['optRequestArray'][option_idx]))
           option_array[str(option_idx)] = option_choice
       elif type(playerData['optRequestArray']) == list:
         for option_idx in range(len(playerData['optRequestArray'])):
           option_choice = str(self._random_array_element(
-              playerData['optRequestArray'][option_idx]))
+            playerData['optRequestArray'][option_idx]))
           option_array[str(option_idx)] = option_choice
       else:
         self.bug("Could not parse optRequestArray: %s" % playerData[
@@ -1602,15 +1602,15 @@ taking legal game actions randomly.
 
     b.login()
     retval = b.submit_die_values(
-        self.game_id, swing_array, option_array,
-        self.loaded_data['roundNumber'], self.loaded_data['timestamp'])
+      self.game_id, swing_array, option_array,
+      self.loaded_data['roundNumber'], self.loaded_data['timestamp'])
     if not (retval and retval.status == 'ok'):
       self.bug(
-          "API submit_die_values(%s, %s, %s, %s, %s) unexpectedly failed: %s" % (
-            self.game_id, swing_array, option_array,
-            self.loaded_data['roundNumber'],
-            self.loaded_data['timestamp'],
-            retval and retval.message or "NULL"))
+        "API submit_die_values(%s, %s, %s, %s, %s) unexpectedly failed: %s" % (
+          self.game_id, swing_array, option_array,
+          self.loaded_data['roundNumber'],
+          self.loaded_data['timestamp'],
+          retval and retval.message or "NULL"))
     self._add_php_pre_action_block(b)
     self.log.append({
       'type': 'submitDieValues',
@@ -1630,8 +1630,8 @@ taking legal game actions randomly.
     chosenAttackFunction = '_game_action_start_turn_find_attack_%s' % chosenAttackType
     if not hasattr(self, chosenAttackFunction):
       self.bug(
-          "LoggingBMClient has no function %s to perform %s attack" % (
-            chosenAttackFunction, chosenAttackType))
+        "LoggingBMClient has no function %s to perform %s attack" % (
+          chosenAttackFunction, chosenAttackType))
     [attacker_indices, defender_indices] = getattr(self,
                                                    chosenAttackFunction)(b,
                                                                          attackerData,
@@ -1641,16 +1641,16 @@ taking legal game actions randomly.
                                                  chosenAttackType)
     b.login()
     retval = b.submit_turn(
-        self.game_id, self.attacker, self.defender, attack,
-        chosenAttackType, self.loaded_data['roundNumber'],
-        self.loaded_data['timestamp'], turbo_vals)
+      self.game_id, self.attacker, self.defender, attack,
+      chosenAttackType, self.loaded_data['roundNumber'],
+      self.loaded_data['timestamp'], turbo_vals)
     if not (retval and retval.status == 'ok'):
       self.bug(
-          "API submit_turn(%s, %s, %s, %s, %s, %s, %s, %s) unexpectedly failed: %s" % (
-            self.game_id, self.attacker, self.defender,
-            attack, chosenAttackType, self.loaded_data['roundNumber'],
-            self.loaded_data['timestamp'], turbo_vals,
-            retval and retval.message or "NULL"))
+        "API submit_turn(%s, %s, %s, %s, %s, %s, %s, %s) unexpectedly failed: %s" % (
+          self.game_id, self.attacker, self.defender,
+          attack, chosenAttackType, self.loaded_data['roundNumber'],
+          self.loaded_data['timestamp'], turbo_vals,
+          retval and retval.message or "NULL"))
     self._add_php_pre_action_block(b)
     self.log.append({
       'type': 'submitTurn',
@@ -1673,24 +1673,24 @@ taking legal game actions randomly.
   def _game_action_react_to_initiative(self):
     if self._waiting_on_player(0) and self._waiting_on_player(1):
       self.bug(
-          "Game found waiting on both players during REACT_TO_INITIATIVE")
+        "Game found waiting on both players during REACT_TO_INITIATIVE")
     if self._waiting_on_player(0):
       return self._game_action_react_to_initiative_player(
-          self.player_client,
-          self.loaded_data['playerDataArray'][0],
-          self.loaded_data['playerDataArray'][1])
+        self.player_client,
+        self.loaded_data['playerDataArray'][0],
+        self.loaded_data['playerDataArray'][1])
     if self._waiting_on_player(1):
       return self._game_action_react_to_initiative_player(
-          self.opponent_client,
-          self.loaded_data['playerDataArray'][1],
-          self.loaded_data['playerDataArray'][0])
+        self.opponent_client,
+        self.loaded_data['playerDataArray'][1],
+        self.loaded_data['playerDataArray'][0])
     self.bug(
-        "Game found waiting on neither player during REACT_TO_INITIATIVE")
+      "Game found waiting on neither player during REACT_TO_INITIATIVE")
 
   def _game_action_adjust_fire_dice(self):
     if self._waiting_on_player(0) and self._waiting_on_player(1):
       self.bug(
-          "Game found waiting on both players during ADJUST_FIRE_DICE")
+        "Game found waiting on both players during ADJUST_FIRE_DICE")
     if self._waiting_on_player(0):
       return self._game_action_adjust_fire_dice_player(self.player_client,
                                                        self.loaded_data[
@@ -1701,25 +1701,25 @@ taking legal game actions randomly.
                                                          1])
     if self._waiting_on_player(1):
       return self._game_action_adjust_fire_dice_player(
-          self.opponent_client,
-          self.loaded_data['playerDataArray'][1],
-          self.loaded_data['playerDataArray'][0])
+        self.opponent_client,
+        self.loaded_data['playerDataArray'][1],
+        self.loaded_data['playerDataArray'][0])
     self.bug("Game found waiting on neither player during ADJUST_FIRE_DICE")
 
   def _game_action_choose_reserve_dice(self):
     if self._waiting_on_player(0) and self._waiting_on_player(1):
       self.bug(
-          "Game found waiting on both players during CHOOSE_RESERVE_DICE")
+        "Game found waiting on both players during CHOOSE_RESERVE_DICE")
     if self._waiting_on_player(0):
       return self._game_action_choose_reserve_dice_player(
-          self.player_client,
-          self.loaded_data['playerDataArray'][0])
+        self.player_client,
+        self.loaded_data['playerDataArray'][0])
     if self._waiting_on_player(1):
       return self._game_action_choose_reserve_dice_player(
-          self.opponent_client,
-          self.loaded_data['playerDataArray'][1])
+        self.opponent_client,
+        self.loaded_data['playerDataArray'][1])
     self.bug(
-        "Game found waiting on neither player during CHOOSE_RESERVE_DICE")
+      "Game found waiting on neither player during CHOOSE_RESERVE_DICE")
 
   def _game_action_choose_auxiliary_dice(self):
     waiting_players = []
@@ -1731,9 +1731,9 @@ taking legal game actions randomly.
         self.opponent_client, self.loaded_data['playerDataArray'][1]])
     if len(waiting_players) == 0:
       self.bug(
-          "Game found waiting on neither player during CHOOSE_AUXILIARY_DICE")
+        "Game found waiting on neither player during CHOOSE_AUXILIARY_DICE")
     [chosen_client, chosen_array] = self._random_array_element(
-        waiting_players)
+      waiting_players)
     if chosen_client == self.opponent_client:
       self.state['opponent_aux_chosen'] = True
     return self._game_action_choose_auxiliary_dice_player(chosen_client,
@@ -1750,7 +1750,7 @@ taking legal game actions randomly.
     if len(waiting_players) == 0:
       self.bug("Game found waiting on neither player during SPECIFY_DICE")
     [chosen_client, chosen_array] = self._random_array_element(
-        waiting_players)
+      waiting_players)
     return self._game_action_specify_dice_player(chosen_client,
                                                  chosen_array)
 
@@ -1804,7 +1804,7 @@ taking legal game actions randomly.
     f.close()
 
   def record_create_game(self, button1, button2, max_wins=3,
-      use_prev_game=False):
+    use_prev_game=False):
     self.player_client.login()
     retval = self.player_client.create_game(button1, obutton=button2,
                                             opponent=self.opponent_client.username,
@@ -1892,7 +1892,7 @@ taking legal game actions randomly.
         self._game_action_adjust_fire_dice()
       else:
         self.bug(
-            "LoggingBMClient.next_game_action() has no action for state %s" % state)
+          "LoggingBMClient.next_game_action() has no action for state %s" % state)
       state = self.loaded_data['gameState']
     return True
 
@@ -1943,14 +1943,14 @@ This class is used to randomly select buttons to be used in a new game.
     for key in sorted(criteria.keys()):
       if key not in KNOWN_KEYS:
         raise ValueError(
-            "Requested search based on key %s which is unknown" % key)
+          "Requested search based on key %s which is unknown" % key)
 
     options = []
     if 'name' in criteria:
       for name in criteria['name']:
         if name not in self.button_names:
           raise ValueError(
-              "Requested button name %s was not found in list" % name)
+            "Requested button name %s was not found in list" % name)
       options = criteria['name']
     elif 'random' in criteria:
       options = ['__random', ]

@@ -28,7 +28,7 @@ def parse_arguments():
   # Set up the main parser and subparser.
 
   parser = argparse.ArgumentParser(
-      description="Show head-to-head records between a protagonist (a button or a player) and one or more opponents.")
+    description="Show head-to-head records between a protagonist (a button or a player) and one or more opponents.")
 
   subparsers = parser.add_subparsers(dest='type',
                                      title="Type of thing to compare",
@@ -113,8 +113,8 @@ def print_record(bmconn, kind, thing1, thing2):
     winpct = 0
 
   print(
-      "{0} vs {1}: {2} - {3} ({4:.2f}%)".format(thing1, thing2, wins, losses,
-                                                winpct))
+    "{0} vs {1}: {2} - {3} ({4:.2f}%)".format(thing1, thing2, wins, losses,
+                                              winpct))
 
 
 # MAIN BODY

@@ -9,7 +9,7 @@
 # Import stuff from the future.
 
 from __future__ import absolute_import, division, print_function, \
-    unicode_literals
+  unicode_literals
 
 import argparse
 # noinspection PyCompatibility
@@ -31,7 +31,7 @@ def parse_arguments():
   # Set up the main parser and subparser.
 
   parser = argparse.ArgumentParser(
-      description="Show record of a button or a player.")
+    description="Show record of a button or a player.")
 
   subparsers = parser.add_subparsers(dest='type',
                                      title="Type of thing to show",
