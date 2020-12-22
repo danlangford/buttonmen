@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 CREATE_GAME
 Example script which creates games, and also prints information
@@ -129,8 +129,8 @@ def create_games(b, buttons, opponents):
 def create_random_game(opponent, b, players=False, usebuttons=False):
   if not players:
     players = lookup_other_players(b)
-  if opponent not in players:
-    raise (ValueError, 'Opponent %s is not known on site' % opponent)
+  if not opponent in players:
+    raise ValueError("Opponent %s is not known on site" % opponent)
   buttons = b.wrap_load_button_names()
   while True:
     if usebuttons:
@@ -159,7 +159,7 @@ def play_all_opponents(args, b):
     buttons = b.wrap_load_button_names()
     skillbuttons = get_buttons_with_skills(buttons, args.play_skills)
     if not skillbuttons:
-      raise (ValueError, "No buttons found with requested skills")
+      raise ValueError("No buttons found with requested skills")
   else:
     skillbuttons = False
   for player in players:
@@ -170,6 +170,12 @@ def play_all_opponents(args, b):
         create_random_game(player, b, players=players,
                            usebuttons=skillbuttons)
 
+b = bmutils.BMClientParser(opts.config, opts.site)
+if not b.verify_login():
+  print("Could not login")
+  sys.exit(1)
+if opts.opponent:
+  create_random_game(opts.opponent, b)
 
 if __name__ == "__main__":
   main()

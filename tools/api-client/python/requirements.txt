@@ -1,4 +1,5 @@
-future
-requests
-configparser
+beautifulsoup4~=4.9.3
+trueskill~=0.4.5
+requests~=2.25.0
 PyYAML
+fortune

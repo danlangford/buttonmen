@@ -6,6 +6,7 @@
 
 bmrc = "~/.bmrc"
 site = "www"
+bmutilspath = "./lib"
 
 # Import everything, make a connection, and try to log in.
 

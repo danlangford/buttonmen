@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# TEST LOG GAMES
+#!/usr/bin/env python3
+##### test_log_games
 
 import os
 import sys
@@ -10,7 +10,6 @@ from lib import bmapi
 from lib import random_ai
 import time
 
-
 ########################################################################
 # Custom classes
 class LoggingBMClient(random_ai.LoggingBMClient):
@@ -20,12 +19,10 @@ class LoggingBMClient(random_ai.LoggingBMClient):
   # clarity during testing
   pass
 
-
 ########################################################################
 # Initial setup
 if len(sys.argv) < 2:
-  raise ValueError(
-    "Usage: test_log_games <play_games> [<b1_criteria>] [<b2_criteria>]")
+  raise ValueError("Usage: test_log_games <play_games> [<b1_criteria>] [<b2_criteria>]")
 
 nextarg = 1
 N_GAMES = int(sys.argv[nextarg])
@@ -44,8 +41,7 @@ if not b2.login():
 b1_criteria = {}
 if len(sys.argv) > nextarg:
   for critstr in sys.argv[nextarg].split(';'):
-    if not critstr:
-      continue
+    if not critstr: continue
     key, value = critstr.split('=')
     b1_criteria[key.strip()] = value.strip().split(',')
 nextarg += 1
@@ -53,8 +49,7 @@ nextarg += 1
 if len(sys.argv) > nextarg:
   b2_criteria = {}
   for critstr in sys.argv[nextarg].split(';'):
-    if not critstr:
-      continue
+    if not critstr: continue
     key, value = critstr.split('=')
     b2_criteria[key.strip()] = value.strip().split(',')
 else:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # GAME_INFO
 # Example script which prints player and opponent information about
 # an existing game
@@ -12,6 +12,7 @@ from lib import bmutils
 # implicitly parses sys.argv
 def parse_args():
   parser = argparse.ArgumentParser()
+  parser.add_argument("gameid", type=str)
   parser.add_argument(
     "-c", "--config",
     help="config file containing site parameters",
@@ -22,7 +23,6 @@ def parse_args():
     help="buttonmen site to access",
     type=str, default="www"
   )
-  parser.add_argument("gameid")
   return parser.parse_args()
 
 

@@ -24,10 +24,8 @@ class BMAPIResponse:
   def __init__(self, response_dict):
     for mandatory_arg in ['data', 'message', 'status']:
       if mandatory_arg not in response_dict:
-        raise (
-          ValueError,
-          "Malformed API response is missing key '%s': %s" % (
-            mandatory_arg, response_dict))
+        raise ValueError("Malformed API response is missing key '%s': %s" % (
+          mandatory_arg, response_dict))
     self.data = response_dict['data']
     self.message = response_dict['message']
     self.status = response_dict['status']
@@ -71,11 +69,12 @@ class BMClient:
     self._setup_cookies()
 
   def _make_request(self, args):
+    data = json.dumps(args)
     headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
     }
     response = self.session.post(url=self.url, data=json.dumps(args),
-                             headers=headers,)
+                                 headers=headers, )
 
     try:
       retval = response.json()
@@ -126,10 +125,52 @@ class BMClient:
     }
     return self._make_request(args)
 
+  def load_new_games(self):
+    args = {
+      'type': 'loadNewGames',
+    }
+    return self._make_request(args)
+
   def load_completed_games(self):
     args = {
       'type': 'loadCompletedGames',
     }
+    return self._make_request(args)
+
+  def search_game_history(self, sortColumn, sortDirection="DESC",
+    numberOfResults=20, page=1, status=None, playerNameA=None, playerNameB=None,
+    buttonNameA=None, buttonNameB=None, gameStartMin=None, gameStartMax=None,
+    lastMoveMin=None, lastMoveMax=None):
+    """
+    {"status":"COMPLETE","sortColumn":"lastMove","sortDirection":"ASC","numberOfResults":"100","page":"1","type":"searchGameHistory","automatedApiCall":false}:
+    {"playerNameA":"glassonion","buttonNameA":"Bunnies","buttonNameB":"McGinty","playerNameB":"Jota","gameStartMin":1546326000,"gameStartMax":1577775600,"status":"COMPLETE","sortColumn":"lastMove","sortDirection":"ASC","numberOfResults":"100","page":"1","type":"searchGameHistory","automatedApiCall":false}:
+    """
+    args = {
+      'type': 'searchGameHistory',
+      'sortColumn': sortColumn,
+      'sortDirection': sortDirection,
+      'numberOfResults': numberOfResults,
+      'page': page
+    }
+    if status is not None:
+      args['status'] = status
+    if playerNameA is not None:
+      args['playerNameA'] = playerNameA
+    if playerNameB is not None:
+      args['playerNameB'] = playerNameB
+    if buttonNameA is not None:
+      args['buttonNameA'] = buttonNameA
+    if buttonNameB is not None:
+      args['buttonNameB'] = buttonNameB
+    if gameStartMin is not None:
+      args['gameStartMin'] = gameStartMin
+    if gameStartMax is not None:
+      args['gameStartMax'] = gameStartMax
+    if lastMoveMin is not None:
+      args['lastMoveMin'] = lastMoveMin
+    if lastMoveMax is not None:
+      args['lastMoveMax'] = lastMoveMax
+
     return self._make_request(args)
 
   def load_game_data(self, gameId, logEntryLimit=10):

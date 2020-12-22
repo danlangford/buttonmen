@@ -98,12 +98,39 @@ class BMClientParser(bmapi.BMClient):
       raise ValueError("Failed to call loadActiveGames, got: " + retval.message)
     return self._wrap_game_list_data(retval.data)
 
+  def wrap_load_new_games(self):
+    retval = self.load_new_games()
+    if not retval.status == 'ok':
+      raise ValueError("Failed to call loadActiveGames, got: " + retval.message)
+    return self._wrap_game_list_data(retval.data)
+
   def wrap_load_completed_games(self):
     retval = self.load_completed_games()
     if not retval.status == 'ok':
       raise ValueError(
         "Failed to call loadCompletedGames, got: " + retval.message)
     return self._wrap_game_list_data(retval.data)
+
+  def wrap_search_game_history(self, sortColumn, searchDirection="DESC",
+    numberOfResults=20, page=1, status=None, playerNameA=None, playerNameB=None,
+    buttonNameA=None, buttonNameB=None, gameStartMin=None, gameStartMax=None,
+    lastMoveMin=None, lastMoveMax=None):
+    retval = self.search_game_history(sortColumn=sortColumn,
+                                      sortDirection=searchDirection,
+                                      numberOfResults=numberOfResults,
+                                      page=page, status=status,
+                                      playerNameA=playerNameA,
+                                      playerNameB=playerNameB,
+                                      buttonNameA=buttonNameA,
+                                      buttonNameB=buttonNameB,
+                                      gameStartMin=gameStartMin,
+                                      gameStartMax=gameStartMax,
+                                      lastMoveMin=lastMoveMin,
+                                      lastMoveMax=lastMoveMax)
+    if not retval.status == 'ok':
+      raise ValueError(
+        "Failed to call searchGameHistory, got: " + retval.message)
+    return retval.data
 
   def wrap_create_game(self, pbutton, obutton='', player='', opponent='',
     description=''):
