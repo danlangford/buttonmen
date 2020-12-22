@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import random
+from os import path
 from subprocess import Popen, PIPE
 
 import fortune
@@ -53,8 +54,53 @@ list_of_fortunes = [
   '/usr/local/share/games/fortunes/wisdom',
   '/usr/local/share/games/fortunes/work',
   '/usr/local/share/games/fortunes/zippy',
+] if path.isfile('/usr/local/share/games/fortunes/fortunes') else [
+  '/usr/share/games/fortunes/art',
+  '/usr/share/games/fortunes/ascii-art',
+  '/usr/share/games/fortunes/computers',
+  '/usr/share/games/fortunes/cookie',
+  '/usr/share/games/fortunes/definitions',
+  '/usr/share/games/fortunes/disclaimer',
+  # '/usr/share/games/fortunes/drugs',
+  '/usr/share/games/fortunes/education',
+  # '/usr/share/games/fortunes/ethnic',
+  '/usr/share/games/fortunes/food',
+  '/usr/share/games/fortunes/fortunes',
+  '/usr/share/games/fortunes/goedel',
+  '/usr/share/games/fortunes/humorists',
+  '/usr/share/games/fortunes/kids',
+  # '/usr/share/games/fortunes/knghtbrd',
+  '/usr/share/games/fortunes/law',
+  '/usr/share/games/fortunes/linuxcookie',
+  '/usr/share/games/fortunes/linux',
+  '/usr/share/games/fortunes/literature',
+  '/usr/share/games/fortunes/love',
+  '/usr/share/games/fortunes/magic',
+  '/usr/share/games/fortunes/medicine',
+  # '/usr/share/games/fortunes/men-women',
+  '/usr/share/games/fortunes/miscellaneous',
+  '/usr/share/games/fortunes/news',
+  '/usr/share/games/fortunes/paradoxum',
+  '/usr/share/games/fortunes/people',
+  '/usr/share/games/fortunes/perl',
+  '/usr/share/games/fortunes/pets',
+  '/usr/share/games/fortunes/platitudes',
+  # '/usr/share/games/fortunes/politics',
+  '/usr/share/games/fortunes/pratchett',
+  '/usr/share/games/fortunes/riddles',
+  '/usr/share/games/fortunes/science',
+  '/usr/share/games/fortunes/songs-poems',
+  '/usr/share/games/fortunes/sports',
+  '/usr/share/games/fortunes/startrek',
+  # '/usr/share/games/fortunes/translate-me',
+  '/usr/share/games/fortunes/tao',
+  '/usr/share/games/fortunes/wisdom',
+  '/usr/share/games/fortunes/work',
+  '/usr/share/games/fortunes/zippy',
 ]
 
+
+# TODO consider shipping with own fortune files in the future
 
 def parse_args():
   parser = argparse.ArgumentParser()
