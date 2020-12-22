@@ -7,6 +7,8 @@ import argparse
 import sys
 import time
 from builtins import input
+from datetime import datetime
+
 from lib import bmutils
 
 
@@ -28,11 +30,13 @@ def parse_args():
 class Monitor(object):
   def __init__(self, client):
     self.client = client
+    self.sleep_sec = 120
     if not self.client.verify_login():
       print("Could not login")
       sys.exit(1)
 
-  def start(self, handle_new=lambda g: None, handle_active=lambda g: None, await_confirm=True):
+  def start(self, handle_new=lambda g: None, handle_active=lambda g: None,
+    await_confirm=True):
     while True:
 
       newgames = self.client.wrap_load_new_games()
@@ -57,8 +61,9 @@ class Monitor(object):
       if games_active and await_confirm:
         input()
       else:
-        print('Zzz')
-        time.sleep(120)
+        print(
+          f'Zzz for {self.sleep_sec} @ {datetime.isoformat(datetime.now())}')
+        time.sleep(self.sleep_sec)
 
 
 if __name__ == "__main__":

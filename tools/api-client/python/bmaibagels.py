@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 import argparse
-from subprocess import Popen, PIPE, STDOUT, run
-import fortune
-import monitor
-import game_data
 import random
+from subprocess import Popen, PIPE
+
+import fortune
+
+import game_data
+import monitor
 from lib import bmutils
 
 set_of_supported_skills = {'Twin', 'Swing', 'Poison', 'Speed', 'Shadow',
                            'Stealth', 'Queer', 'Trip', 'Mood', 'Null', 'Option',
                            'Berserk', 'TimeAndSpace', 'Mighty', 'Weak',
                            'Reserve', 'Ornery', 'Chance', 'Morphing', 'Focus',
-                           'Warrior', 'Slow', 'Unique', 'Stinger'}
+                           'Warrior', 'Slow', 'Unique', 'Stinger', 'R Swing',
+                           'S Swing', 'T Swing', 'U Swing', 'V Swing',
+                           'W Swing', 'X Swing', 'Y Swing', 'Z Swing', }
 
 list_of_fortunes = [
   '/usr/local/share/games/fortunes/art',
@@ -80,7 +84,9 @@ class BMAIBagels(object):
                        handle_new=self.new_challenge, await_confirm=False)
 
   def new_challenge(self, game):
-    print(game['gameId'])
+    # TODO: some dice exist where we could "accept" the game and not "use" the dice
+    # like AUX dice. they would need to be hidden from BMAI
+    gameid = game['gameId']
     if len(self.buttons) == 0:
       self.buttons = self.client.wrap_load_button_names()
     myskills = self.buttons[game['myButtonName']]['dieTypes'] + \
@@ -88,11 +94,16 @@ class BMAIBagels(object):
     theirskills = self.buttons[game['opponentButtonName']]['dieTypes'] + \
                   self.buttons[game['opponentButtonName']]['dieSkills']
     supportset = set(myskills + theirskills)
-    for s in supportset:
-      s.lower()
     disallowedset = supportset - set_of_supported_skills
-    print(disallowedset)
-    # myskills = self.client.
+    if len(disallowedset) > 0:
+      print(f"I don't think we support the following: {disallowedset}")
+      action = "reject"
+    else:
+      action = "accept"
+
+    retval = self.client.react_to_new_game(gameid, action)
+    print(retval.message)
+    return retval.status == "ok"
 
   def monitor_handler(self, game):
     gameid = game['gameId']
