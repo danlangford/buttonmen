@@ -7,7 +7,9 @@
 import argparse
 import json
 import sys
+
 import yaml
+
 from lib import bmutils
 
 
@@ -69,10 +71,10 @@ class bmai(object):
       player0, player1 = game['player'], game['opponent']
     else:
       player0, player1 = (game['opponent'], game['player'])
-    retval += f"player 0 {len(player0['activeDieArray'])} {game['player']['gameScoreArray']['W']}\n"
+    retval += f"player 0 {len(player0['activeDieArray'])} {player0['roundScore'] if player0['roundScore'] else 0}\n"
     for d in player0['activeDieArray']:
       retval += f"{bmai.recipe(d, dieVals)}\n"
-    retval += f"player 1 {len(player1['activeDieArray'])} {game['opponent']['gameScoreArray']['W']}\n"
+    retval += f"player 1 {len(player1['activeDieArray'])} {player1['roundScore'] if player1['roundScore'] else 0}\n"
     for d in player1['activeDieArray']:
       retval += f"{bmai.recipe(d, dieVals)}\n"
     retval += "ply 3\nmax_sims 100\nmin_sims 5\nmaxbranch 400\n"
