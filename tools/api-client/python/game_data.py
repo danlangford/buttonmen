@@ -65,6 +65,8 @@ class bmai(object):
       retval += "reserve\n"
     # elif game['gameState'] == 'CHOOSE_AUXILIARY_DICE':
     #   retval += "auxpox?\n"
+    elif game['gameState'] == 'REACT_TO_INITIATIVE':
+      retval += "focus\n"
     else:
       retval += f"unhandled_{game['gameState']}\n"
     if game['player']['waitingOnAction']:

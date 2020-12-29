@@ -218,6 +218,9 @@ class BMAIBagels(object):
           if isok:
             acted = True
           continue
+        elif state == 'REACT_TO_INITIATIVE':
+          action = bmai.stdout.readline().strip()
+          self.react_initiative(game, action)
     if printed:
       print('')
     if not acted:
@@ -247,8 +250,22 @@ class BMAIBagels(object):
     print(retval.message)
     return retval.status == 'ok'
 
+  def react_initiative(self, game, action):
+    # currently i dont support using a focus. (i need to observe it once)
+    if action == "pass":
+      action = "decline"
+    else:
+      raise Exception("need better Focus support")
+    retval = self.client.react_to_initiative(game['gameId'], action, [], [],
+                                             roundNumber=game['roundNumber'],
+                                             timestamp=game['timestamp'])
+    print(retval.message)
+    return retval.status == 'ok'
+
   def submit_reserve(self, game, reserve_cmd):
-    # currently i do not support the "decline" action which can omit the dieIdx?
+    if reserve_cmd.startswith("pass"):
+      raise Exception("need better support for passing on reserve dice")
+    # currently i do not support the "decline" action  (i need to observe it once) which can omit the dieIdx?
     retval = self.client.choose_reserve_dice(game['gameId'], 'add',
                                              reserve_cmd.split()[1])
     print(retval.message)
