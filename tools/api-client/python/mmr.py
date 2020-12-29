@@ -22,6 +22,8 @@ if not bm.verify_login():
 
 # options: all, tl, fair, tlopen
 allowed_games = "tlopen"
+start_time = datetime(2020, 12, 15, 0, 0, 0, tzinfo=timezone.utc)
+stop_time = datetime(2021, 12, 28, 0, 0, 0, tzinfo=timezone.utc)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
                "SydCon 10"]
@@ -60,6 +62,7 @@ observed_button_stats = {}
 buttons = bm.wrap_load_button_names()
 ratings = {}
 players_total_game_count = {}
+players_total_win_count = {}
 players_button_counts = {}
 total_games_considered = 0
 total_games_included = 0
@@ -98,16 +101,26 @@ def do_the_ratings(game):
   wrate, lrate = rate_1vs1(wrate, lrate)
   ratings[wplay] = wrate
   ratings[lplay] = lrate
+  players_total_win_count[wplay] = players_total_win_count.get(wplay, 0) + 1
   players_total_game_count[wplay] = players_total_game_count.get(wplay, 0) + 1
   players_total_game_count[lplay] = players_total_game_count.get(lplay, 0) + 1
   total_games_included += 1
 
-  w_butt_counts = players_button_counts.get(wplay, {'freq': {}, 'best': {}})
+  w_butt_counts = players_button_counts.get(wplay, {'freq': {}, 'best': {},
+                                                    'rate': {}})
   w_butt_counts['freq'][wbutt] = w_butt_counts['freq'].get(wbutt, 0) + 1
   w_butt_counts['best'][wbutt] = w_butt_counts['best'].get(wbutt, 0) + 1
+  w_butt_counts['rate'][wbutt] = w_butt_counts['best'][wbutt] / \
+                                 w_butt_counts['freq'][wbutt]
   players_button_counts[wplay] = w_butt_counts
-  l_butt_counts = players_button_counts.get(lplay, {'freq': {}, 'best': {}})
+
+  l_butt_counts = players_button_counts.get(lplay, {'freq': {}, 'best': {},
+                                                    'rate': {}})
   l_butt_counts['freq'][lbutt] = l_butt_counts['freq'].get(lbutt, 0) + 1
+  l_butt_counts['best'][lbutt] = l_butt_counts['best'].get(lbutt,
+                                                           0)  # dont increment, but make sure the value is populated, even if 0
+  l_butt_counts['rate'][lbutt] = l_butt_counts['best'][lbutt] / \
+                                 l_butt_counts['freq'][lbutt]
   players_button_counts[lplay] = l_butt_counts
 
 
@@ -143,10 +156,8 @@ while keep_going:
     numberOfResults=size,
     page=page,
     status="COMPLETE",
-    lastMoveMin=int(
-      datetime(2020, 12, 15, 0, 0, 0, 0, timezone.utc).timestamp()),
-    lastMoveMax=int(
-      datetime(2020, 12, 21, 0, 0, 0, 0, timezone.utc).timestamp()))
+    lastMoveMin=int(start_time.timestamp()),
+    lastMoveMax=int(stop_time.timestamp()))
 
   for game in search['games']:
 
@@ -193,10 +204,9 @@ while keep_going:
 
   page += 1
 
-print(
-  f"strat:{allowed_games} games counted {total_games_included} / games considered {total_games_considered}")
+print(f"strategy:{allowed_games} games counted {total_games_included} / {total_games_considered} total games found during…\n{start_time} - {stop_time}")
 
-print("LEADERBOARD")
+print("[quote][b]LEADERBOARD[/b]")
 
 # leaderboard = sorted(ratings, key=env.expose, reverse=True)
 
@@ -216,14 +226,38 @@ listedboard = list(leaderboard)
 for k in leaderboard:
   num = listedboard.index(k) + 1
   tot_games = players_total_game_count[k]
-  most_games = \
-    max(players_button_counts[k]['freq'].items(), key=operator.itemgetter(1))[0]
-  best_games = \
-    max(players_button_counts[k]['best'].items(), key=operator.itemgetter(1))[0]
-  print(
-    f"{num:02} [player={k}] games={tot_games} most=[button={most_games}] best=[button={best_games}]")
+  tot_wins = players_total_win_count[k]
 
-print("CHALLENGERS")
+  tot_win_rate = tot_wins / tot_games * 100
+  tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 else ''
+
+  # first [0] gets the first (max when reverse=true) in the list
+  # second [0] gets the KEY from the KEY/value pair
+  most_played = \
+    sorted(players_button_counts[k]['freq'].items(), key=operator.itemgetter(1),
+           reverse=True)
+  most_won = \
+    sorted(players_button_counts[k]['best'].items(), key=operator.itemgetter(1),
+           reverse=True)
+  most_rate = \
+    sorted(players_button_counts[k]['rate'].items(), key=operator.itemgetter(1),
+           reverse=True)
+
+  interesting = ""
+  for bn in players_button_counts[k]['freq']:
+    bc = players_button_counts[k]['freq'][bn]
+    br = players_button_counts[k]['rate'][bn] * 100
+    if bc >= 5 and br > 50:
+      if not interesting.startswith("Noteworthy"):
+        interesting = "Noteworthy: " + interesting
+      interesting += f"[button={bn}]({bc}, {br:.0f}%) "
+
+
+  print(
+    f"{num:02} [player={k}]({tot_games}{tot_win_rate}) {interesting}")
+
+print("[/quote]\n")
+print("[quote][b]CHALLENGERS[/b]")
 
 leaderboard_challengers = dict(
   filter(lambda elem: players_total_game_count[elem[0]] < min_games_played,
@@ -237,16 +271,14 @@ leaderboard_challengers = {k: v for k, v in
 listedboard_challengers = list(leaderboard_challengers)
 for k in leaderboard_challengers:
   tot_games = players_total_game_count[k]
-  most_games = \
-    max(players_button_counts[k]['freq'].items(), key=operator.itemgetter(1))[0]
-  if len(players_button_counts[k]['best']) > 0:
-    best_games = \
-      max(players_button_counts[k]['best'].items(), key=operator.itemgetter(1))[
-        0]
-  else:
-    best_games = "n/a"
+  tot_wins = players_total_win_count.get(k, 0)
+
+  tot_win_rate = tot_wins / tot_games * 100
+  tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 and tot_games > 2 else ''
   print(
-    f"[player={k}] games={tot_games} most=[button={most_games}] best=[button={best_games}]")
+    f"[player={k}]({tot_games}{tot_win_rate})")
+
+print('[/quote]')
 
 # observed_button_stats = {k: v for k, v in sorted(observed_button_stats.items(),
 #                                                  key=lambda item: item[
