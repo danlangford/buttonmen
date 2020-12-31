@@ -221,6 +221,7 @@ class BMAIBagels(object):
         elif state == 'REACT_TO_INITIATIVE':
           action = bmai.stdout.readline().strip()
           self.react_initiative(game, action)
+          acted = True
     if printed:
       print('')
     if not acted:
