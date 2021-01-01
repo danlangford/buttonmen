@@ -112,22 +112,44 @@ def parse_args():
   parser.add_argument(
     "-s", "--site",
     help="buttonmen site to access",
-    type=str, default="bot"
+    type=str, default="bmai"
+  )
+  parser.add_argument(
+    "-f", "--filter",
+    help="filter out games",
+    type=str, default="all", choices=["all", "odd", "even"]
+  )
+  parser.add_argument(
+    "-r", "--random",
+    help="randomize game list", default=False, action='store_true', dest='random'
+  )
+  parser.add_argument(
+    "-g", "--gameid",
+    help="run on 1 specific game",
+    type=int
   )
   return parser.parse_args()
 
 
 class BMAIBagels(object):
-  def __init__(self, client: bmutils.BMClientParser):
+  def __init__(self,
+    client: bmutils.BMClientParser,
+    filter="all",
+    shuffle=False):
     self.client = client
     self.monitor = monitor.Monitor(self.client)
     self.game_data = game_data.GameData(self.client)
     self.bad_games = []
     self.buttons = []
+    self.filter = filter
+    self.doshuffle = shuffle
 
   def start_monitor(self):
     self.monitor.start(handle_active=self.monitor_handler,
-                       handle_new=self.new_challenge, await_confirm=False)
+                       handle_new=self.new_challenge,
+                       await_confirm=False,
+                       shuffle=self.doshuffle,
+                       filter=self.filter)
 
   def new_challenge(self, game):
     # TODO: some dice exist where we could "accept" the game and not "use" the dice
@@ -159,6 +181,7 @@ class BMAIBagels(object):
 
     # may have come in recursivly and we need to break away if its not actually our turn
     if not game['player']['waitingOnAction']:
+      print('not my turn')
       return
 
     bmai_input = game_data.bmai.dump(game)
@@ -264,11 +287,12 @@ class BMAIBagels(object):
     return retval.status == 'ok'
 
   def submit_reserve(self, game, reserve_cmd):
-    if reserve_cmd.startswith("pass"):
-      raise Exception("need better support for passing on reserve dice")
-    # currently i do not support the "decline" action  (i need to observe it once) which can omit the dieIdx?
-    retval = self.client.choose_reserve_dice(game['gameId'], 'add',
-                                             reserve_cmd.split()[1])
+    dieIdx = reserve_cmd.split()[1]
+    if dieIdx == '-1':
+      retval = self.client.choose_reserve_dice(game['gameId'], 'decline')
+    else:
+      retval = self.client.choose_reserve_dice(game['gameId'], 'add', dieIdx)
+
     print(retval.message)
     return retval.status == 'ok'
 
@@ -349,5 +373,8 @@ class BMAIBagels(object):
 if __name__ == '__main__':
   args = parse_args()
   bmclient = bmutils.BMClientParser(args.config, args.site)
-  bmaibagels = BMAIBagels(bmclient)
-  bmaibagels.start_monitor()
+  bmaibagels = BMAIBagels(bmclient, filter=args.filter, shuffle=args.random)
+  if args.gameid:
+    bmaibagels.monitor_handler({'gameId':args.gameid})
+  else:
+    bmaibagels.start_monitor()

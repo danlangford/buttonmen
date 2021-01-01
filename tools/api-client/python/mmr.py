@@ -23,7 +23,7 @@ if not bm.verify_login():
 # options: all, tl, fair, tlopen
 allowed_games = "tlopen"
 start_time = datetime(2020, 12, 15, 0, 0, 0, tzinfo=timezone.utc)
-stop_time = datetime(2021, 12, 28, 0, 0, 0, tzinfo=timezone.utc)
+stop_time = datetime(2021, 1, 4, 0, 0, 0, tzinfo=timezone.utc)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
                "SydCon 10"]
@@ -57,7 +57,7 @@ class RStat(object):
     self.count = int(count.string.strip())
 
 
-banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels']
+banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels','buttonbot2']
 observed_button_stats = {}
 buttons = bm.wrap_load_button_names()
 ratings = {}

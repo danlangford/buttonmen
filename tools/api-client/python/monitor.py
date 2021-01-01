@@ -4,6 +4,7 @@
 # periodically for games which are waiting for you to act
 
 import argparse
+import random
 import sys
 import time
 from builtins import input
@@ -36,28 +37,35 @@ class Monitor(object):
       sys.exit(1)
 
   def start(self, handle_new=lambda g: None, handle_active=lambda g: None,
-    await_confirm=True):
+    await_confirm=True, shuffle=False, filter="all"):
     while True:
 
       newgames = self.client.wrap_load_new_games()
+      if shuffle:
+        random.shuffle(newgames)
       for ng in newgames:
-        if ng['isAwaitingAction']:
-          print(f"{ng['gameId']}: "
-                f"{self.client.username} ({ng['myButtonName']})"
-                " vs. "
-                f"{ng['opponentName']} ({ng['opponentButtonName']})")
-          handle_new(ng)
+        if (filter == "all") or (filter == "odd" and ng['gameId']%2!=0) or (filter == "even" and ng['gameId']%2==0):
+          if ng['isAwaitingAction']:
+            print(f"{ng['gameId']}: "
+                  f"{self.client.username} ({ng['myButtonName']})"
+                  " vs. "
+                  f"{ng['opponentName']} ({ng['opponentButtonName']})")
+            handle_new(ng)
 
       games = self.client.wrap_load_active_games()
+      if shuffle:
+        random.shuffle(games)
       games_active = False
       for game in games:
-        if game['isAwaitingAction']:
-          print(f"{game['gameId']}: "
-                f"{self.client.username} ({game['myButtonName']})"
-                " vs. "
-                f"{game['opponentName']} ({game['opponentButtonName']})")
-          games_active = True
-          handle_active(game)
+        if (filter == "all") or (filter == "odd" and game['gameId']%2!=0) or (filter == "even" and game['gameId']%2==0):
+          if game['isAwaitingAction']:
+            print(f"{game['gameId']}: "
+                  f"{self.client.username} ({game['myButtonName']})"
+                  " vs. "
+                  f"{game['opponentName']} ({game['opponentButtonName']})")
+            games_active = True
+            handle_active(game)
+
       if games_active and await_confirm:
         input()
       else:
