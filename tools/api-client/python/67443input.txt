@@ -1,0 +1,20 @@
+game 3
+focus
+player 0 5 25
+f6
+8
+8
+8
+f20
+player 1 5 19
+(4,4)
+6
+8
+12
+X
+ply 3
+max_sims 100
+min_sims 5
+maxbranch 400
+getaction
+quit
