@@ -43,13 +43,13 @@ class NoAliasDumper(yaml.SafeDumper):
 
 
 class bmai(object):
-  def recipe(d, vals=True):
+  def recipe(d, showVals=True):
     r = d['recipe']
     if ',' not in r:
       r = r.replace('(', '').replace(')', '')
-    if vals:
-      if '/' in r or 'Swing' in d['description']:
-        r += '-' + str(d['sides'])
+    if ('/' in r or 'Swing' in d['description']) and d['sides']:
+      r += '-' + str(d['sides'])
+    if showVals and d['value']:
       r += f":{d['value']}"
     return r
 
