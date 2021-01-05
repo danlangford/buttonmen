@@ -218,13 +218,12 @@ class BMAIBagels(object):
               swing_select.append(l)
             elif l.startswith("option"):
               opt_select.append(l)
-          self.submit_swings(game, swing_select, opt_select)
-          acted = True
+          acted = self.submit_swings(game, swing_select, opt_select)
           continue
         elif state == 'CHOOSE_RESERVE_DICE':
           l = bmai.stdout.readline().strip()
-          self.submit_reserve(game, l)
-          acted = True
+          acted = self.submit_reserve(game, l)
+          continue
         elif state == 'START_TURN':
           turbos = len(game['player']['turboSizeArray'])
           turbo_select = []
@@ -243,8 +242,8 @@ class BMAIBagels(object):
           continue
         elif state == 'REACT_TO_INITIATIVE':
           action = bmai.stdout.readline().strip()
-          self.react_initiative(game, action)
-          acted = True
+          acted = self.react_initiative(game, action)
+          continue
     if printed:
       print('')
     if not acted:
@@ -275,12 +274,17 @@ class BMAIBagels(object):
     return retval.status == 'ok'
 
   def react_initiative(self, game, action):
-    # currently i dont support using a focus. (i need to observe it once)
+    idx=[]
+    val=[]
     if action == "pass":
       action = "decline"
     else:
-      raise Exception("need better Focus support")
-    retval = self.client.react_to_initiative(game['gameId'], action, [], [],
+      parts = action.split()
+      action=parts[0]
+      idx.append(parts[1])
+      if len(parts) > 2:
+        val.append(parts[2])
+    retval = self.client.react_to_initiative(game['gameId'], action, idx, val,
                                              roundNumber=game['roundNumber'],
                                              timestamp=game['timestamp'])
     print(retval.message)
