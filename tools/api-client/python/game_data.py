@@ -43,22 +43,29 @@ class NoAliasDumper(yaml.SafeDumper):
 
 
 class bmai(object):
-  def recipe(d, showVals=True):
+  def recipe(d):
     r = d['recipe']
+
+    # remove () around die, except for option
     if ',' not in r:
       r = r.replace('(', '').replace(')', '')
+
+    # if sides selected for swing or option, include them
     if ('/' in r or 'Swing' in d['description']) and d['sides']:
       r += '-' + str(d['sides'])
-    if showVals and d['value']:
+
+    # include value as needed
+    if d['value']:
       r += f":{d['value']}"
+      if 'Dizzy' in d['properties']:
+        r += 'd'
+
     return r
 
   def dump(game):
     retval = f"game {game['maxWins']}\n"
-    dieVals = False
     if game['gameState'] == "START_TURN":
       retval += "fight\n"
-      dieVals = True
     elif game['gameState'] == "SPECIFY_DICE":
       retval += "preround\n"
     elif game['gameState'] == 'CHOOSE_RESERVE_DICE':
@@ -66,7 +73,15 @@ class bmai(object):
     # elif game['gameState'] == 'CHOOSE_AUXILIARY_DICE':
     #   retval += "auxpox?\n"
     elif game['gameState'] == 'REACT_TO_INITIATIVE':
-      retval += "focus\n"
+      nestedskilllists = [d['skills'] for d in game['player']['activeDieArray']]
+      skills = set(
+        [skill for skilllist in nestedskilllists for skill in skilllist])
+      if 'Focus' in skills:
+        retval += "focus\n"
+      elif 'Chance' in skills:
+        retval += "chance\n"
+      else:
+        retval += "____I_DONT_KNOW_REACT_INITIATIVE_"
     else:
       retval += f"unhandled_{game['gameState']}\n"
     if game['player']['waitingOnAction']:
@@ -75,10 +90,10 @@ class bmai(object):
       player0, player1 = (game['opponent'], game['player'])
     retval += f"player 0 {len(player0['activeDieArray'])} {player0['roundScore'] if player0['roundScore'] else 0}\n"
     for d in player0['activeDieArray']:
-      retval += f"{bmai.recipe(d, dieVals)}\n"
+      retval += f"{bmai.recipe(d)}\n"
     retval += f"player 1 {len(player1['activeDieArray'])} {player1['roundScore'] if player1['roundScore'] else 0}\n"
     for d in player1['activeDieArray']:
-      retval += f"{bmai.recipe(d, dieVals)}\n"
+      retval += f"{bmai.recipe(d)}\n"
     retval += "ply 3\nmax_sims 100\nmin_sims 5\nmaxbranch 400\n"
     retval += "getaction\n"
     retval += "quit\n"
