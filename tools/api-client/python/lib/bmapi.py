@@ -181,6 +181,13 @@ class BMClient:
     }
     return self._make_request(args)
 
+  def load_button_data(self, button):
+    args = {
+      'type': 'loadButtonData',
+      'buttonName': button,
+    }
+    return self._make_request(args)
+
   def create_game(self, pbutton, obutton='', player='', opponent='',
     description='', max_wins=3, use_prev_game=False):
     if player is None or player == '':

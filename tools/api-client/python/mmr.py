@@ -23,10 +23,12 @@ if not bm.verify_login():
 # options: all, tl, fair, tlopen
 allowed_games = "tlopen"
 start_time = datetime(2020, 12, 15, 0, 0, 0, tzinfo=timezone.utc)
-stop_time = datetime(2021, 1, 4, 0, 0, 0, tzinfo=timezone.utc)
+stop_time = datetime(2021, 1, 18, 0, 0, 0, tzinfo=timezone.utc)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
                "SydCon 10"]
+
+highlightplayer = 'bagels'
 
 
 class OStat(object):
@@ -57,7 +59,8 @@ class RStat(object):
     self.count = int(count.string.strip())
 
 
-banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels','buttonbot2']
+banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels',
+                  'buttonbot2']
 observed_button_stats = {}
 buttons = bm.wrap_load_button_names()
 ratings = {}
@@ -98,7 +101,38 @@ def do_the_ratings(game):
   wplay, wbutt, lplay, lbutt = determine_winner(game)
   wrate = ratings.get(wplay, Rating())
   lrate = ratings.get(lplay, Rating())
+
+  ####
+  highlighting = False
+  if highlightplayer and highlightplayer.lower() in [wplay.lower(),
+                                                     lplay.lower()]:
+    highlighting = True
+
+  if highlighting:
+    highlightWins = wplay.lower() == highlightplayer.lower()
+    highlightExpose0 = expose(wrate if highlightWins else lrate)
+    otherExpose0 = expose(lrate if highlightWins else wrate)
+  ####
+
   wrate, lrate = rate_1vs1(wrate, lrate)
+
+  ####
+  if highlighting:
+    highlightExpose1 = expose(wrate if highlightWins else lrate)
+    otherExpose1 = expose(lrate if highlightWins else wrate)
+
+    highlightChange = highlightExpose1 - highlightExpose0
+    otherChange = otherExpose1 - otherExpose0
+
+
+    if highlightWins:
+      print(
+        f'{wplay}({highlightExpose0:.2f},{wrate.mu:.2f},{wrate.sigma:.2f}) WINS v {lplay}({otherExpose0:.2f}). RANK  {wplay}+{highlightChange:.2f} and {lplay}{otherChange:.2f}')
+    else:
+      print(
+        f'{lplay}({highlightExpose0:.2f},{lrate.mu:.2f},{lrate.sigma:.2f}) LOSES v {wplay}({otherExpose0:.2f}). RANK {lplay}{highlightChange:.2f} and {wplay}+{otherChange:.2f}')
+  ####
+
   ratings[wplay] = wrate
   ratings[lplay] = lrate
   players_total_win_count[wplay] = players_total_win_count.get(wplay, 0) + 1
@@ -204,7 +238,8 @@ while keep_going:
 
   page += 1
 
-print(f"strategy:{allowed_games} games counted {total_games_included} / {total_games_considered} total games found during…\n{start_time} - {stop_time}")
+print(
+  f"strategy:{allowed_games} games counted {total_games_included} / {total_games_considered} total games found during…\n{start_time} - {stop_time}")
 
 print("[quote][b]LEADERBOARD[/b]")
 
@@ -252,9 +287,8 @@ for k in leaderboard:
         interesting = "Noteworthy: " + interesting
       interesting += f"[button={bn}]({bc}, {br:.0f}%) "
 
-
   print(
-    f"{num:02} [player={k}]({tot_games}{tot_win_rate}) {interesting}")
+    f"{num:02} [{expose(ratings[k]):.2f}] [player={k}]({tot_games}{tot_win_rate}) {interesting}")
 
 print("[/quote]\n")
 print("[quote][b]CHALLENGERS[/b]")
