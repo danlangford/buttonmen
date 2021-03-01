@@ -107,8 +107,7 @@ list_of_fortunes = [
   '/usr/share/games/fortunes/zippy',
 ]
 
-always_odds = ['Bagels']
-always_odds = [item.lower() for item in always_odds]
+always_odds = [item.lower() for item in ['Bagels','devious']]
 
 
 # TODO consider shipping with own fortune files in the future
