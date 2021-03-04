@@ -20,18 +20,18 @@ bmrc = ".bmrc"
 site = "www"
 
 # options: all, tl, fair, tlopen, hitlistfeb21
-_strategy = "hitlistfeb21"
-_start_date = date(2021, 2, 1)
-# _stop_date = date(2021, 2, 20)
-_stop_date = date(2021, 3, 1) - timedelta(days=1)
+_strategy = "hitlistmar21"
+_start_date = date(2021, 3, 1)
+_stop_date = date(2021, 3, 10)
+# _stop_date = date(2021, 3, 1) - timedelta(days=1)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
                "SydCon 10"]
 hitlistfeb21_sets = ["Free Radicals", "Chicago Crew", "Metamorphers"]
-highlightplayer = 'nycavri'
+hitlistmar21_buttons = ["amica", "bigevildan", "Downen", "Hooloovoo", "Jasyeman", "jgenzano", "juelki", "lunatic", "moekon", "perlmunkee", "roujin27", "sanny", "Yagharek"]
 
-banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels',
-                  'buttonbot2']
+# banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels', 'buttonbot2']
+banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'buttonbot2']
 
 
 # END CONFIG
@@ -117,44 +117,7 @@ def do_the_ratings(game):
   wrate = ratings.get(wplay, Rating())
   lrate = ratings.get(lplay, Rating())
 
-  ####
-  highlighting = False
-  if highlightplayer and highlightplayer.lower() in [wplay.lower(),
-                                                     lplay.lower()]:
-    highlighting = True
-
-  if highlighting:
-    highlightWon = wplay.lower() == highlightplayer.lower()
-    highlightButt = wbutt if highlightWon else lbutt
-    opponentButt = lbutt if highlightWon else wbutt
-    if opponentButt in ['Gripen', 'Poly', 'Sailor Man', 'Caine']:
-      print(
-          f"{highlightplayer} {'win' if highlightWon else 'lose'} {highlightButt} vs {opponentButt}")
-
-  # if highlighting:
-  #   highlightWins = wplay.lower() == highlightplayer.lower()
-  #   highlightExpose0 = expose(wrate if highlightWins else lrate)
-  #   otherExpose0 = expose(lrate if highlightWins else wrate)
-  ####
-
   wrate, lrate = rate_1vs1(wrate, lrate)
-
-  ####
-  # if highlighting:
-  #   highlightExpose1 = expose(wrate if highlightWins else lrate)
-  #   otherExpose1 = expose(lrate if highlightWins else wrate)
-  #
-  #   highlightChange = highlightExpose1 - highlightExpose0
-  #   otherChange = otherExpose1 - otherExpose0
-  #
-  #
-  #   if highlightWins:
-  #     print(
-  #       f'{wplay}({highlightExpose0:.2f},{wrate.mu:.2f},{wrate.sigma:.2f}) WINS v {lplay}({otherExpose0:.2f}). RANK  {wplay}+{highlightChange:.2f} and {lplay}{otherChange:.2f}')
-  #   else:
-  #     print(
-  #       f'{lplay}({highlightExpose0:.2f},{lrate.mu:.2f},{lrate.sigma:.2f}) LOSES v {wplay}({otherExpose0:.2f}). RANK {lplay}{highlightChange:.2f} and {wplay}+{otherChange:.2f}')
-  ####
 
   ratings[wplay] = wrate
   ratings[lplay] = lrate
@@ -256,6 +219,11 @@ def collect_qualifying_games(strategy, status, start_date, stop_date):
             buttons[game['buttonNameB']]['buttonSet'] in hitlistfeb21_sets:
           results.append(game)
 
+      elif strategy == "hitlistmar21":
+        if buttons[game['buttonNameA']]['buttonName'] in hitlistmar21_buttons and \
+            buttons[game['buttonNameB']]['buttonName'] in hitlistmar21_buttons:
+          results.append(game)
+
       elif strategy == "all":
         results.append(game)
 
@@ -297,7 +265,7 @@ def print_report():
   for k in leaderboard:
     num = listedboard.index(k) + 1
     tot_games = players_total_game_count[k]
-    tot_wins = players_total_win_count[k]
+    tot_wins = players_total_win_count.get(k, 0)
 
     tot_win_rate = tot_wins / tot_games * 100
     tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 else ''
