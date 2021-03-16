@@ -107,7 +107,7 @@ list_of_fortunes = [
   '/usr/share/games/fortunes/zippy',
 ]
 
-always_odds = [item.lower() for item in ['Bagels','devious','AnnoDomini']]
+always_odds = [item.lower() for item in ['Bagels','devious','AnnoDomini','ElihuRoot']]
 
 
 # TODO consider shipping with own fortune files in the future
@@ -403,7 +403,9 @@ class BMAIBagels(object):
       else:
         retval = fortune.get_random_fortune(random.choice(list_of_fortunes))
     elif game['opponent']['playerName'].lower() in always_odds:
-      retval = f'{winOdds}% chance to win'
+      retval = f'''{winOdds}% chance to win
+{stats if stats is not None else ""}'''
+
 
     if not retval:
       return ''

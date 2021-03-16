@@ -22,7 +22,7 @@ site = "www"
 # options: all, tl, fair, tlopen, hitlistfeb21
 _strategy = "hitlistmar21"
 _start_date = date(2021, 3, 1)
-_stop_date = date(2021, 3, 10)
+_stop_date = date(2021, 3, 20)
 # _stop_date = date(2021, 3, 1) - timedelta(days=1)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
