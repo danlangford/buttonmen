@@ -9,7 +9,7 @@ import fortune
 import game_data
 import monitor
 from lib import bmutils
-
+from func_timeout import func_set_timeout, FunctionTimedOut
 
 # are warrior dice not working well?
 # focus and chance dice were not working but that was fixed
@@ -196,13 +196,18 @@ class BMAIBagels(object):
       return
 
     bmai_input = game_data.bmai.dump(game)
-    self.exec_bmai(bmai_input, game=game, state=game['gameState'])
+    try:
+      self.exec_bmai(bmai_input, game=game, state=game['gameState'])
+    except FunctionTimedOut:
+      print(f"timed out in {game['gameId']}")
+      self.bad_games.append(game['gameId'])
 
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
     # or the other player was forced to pass
     self.monitor_handler(game)
 
+  @func_set_timeout(3600)
   def exec_bmai(self, input, game, state):
     bmai = Popen(['./bmai'], stdin=PIPE, stdout=PIPE, stderr=PIPE,
                  universal_newlines=True)
