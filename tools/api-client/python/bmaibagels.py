@@ -184,14 +184,14 @@ class BMAIBagels(object):
     print(retval.message)
     return retval.status == "ok"
 
-  def monitor_handler(self, game):
+  def monitor_handler(self, game, calc_other_side=False):
     gameid = game['gameId']
     if gameid in self.bad_games:
       return
     game = self.game_data.fetch(gameid)
 
     # may have come in recursivly and we need to break away if its not actually our turn
-    if not game['player']['waitingOnAction']:
+    if not game['player']['waitingOnAction'] and not calc_other_side:
       print('not my turn')
       return
 
@@ -205,7 +205,7 @@ class BMAIBagels(object):
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
     # or the other player was forced to pass
-    self.monitor_handler(game)
+    self.monitor_handler(game, calc_other_side=True)
 
   @func_set_timeout(3600)
   def exec_bmai(self, input, game, state):
@@ -408,8 +408,7 @@ class BMAIBagels(object):
       else:
         retval = fortune.get_random_fortune(random.choice(list_of_fortunes))
     elif game['opponent']['playerName'].lower() in always_odds:
-      retval = f'''{winOdds}% chance to win
-{stats if stats is not None else ""}'''
+      retval = f'{winOdds}% chance to win'
 
 
     if not retval:
