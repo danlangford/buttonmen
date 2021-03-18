@@ -3,6 +3,7 @@ import argparse
 import random
 from os import path
 from subprocess import Popen, PIPE
+from bmaipy import BMAI, bmai_supported_skills
 
 import fortune
 
@@ -18,13 +19,7 @@ from func_timeout import func_set_timeout, FunctionTimedOut
 # need to no accept games that have some specials skills we cant account for (Japanese Beetle)
 
 
-set_of_supported_skills = {'Twin', 'Swing', 'Poison', 'Speed', 'Shadow',
-                           'Stealth', 'Queer', 'Trip', 'Mood', 'Null', 'Option',
-                           'Berserk', 'TimeAndSpace', 'Mighty', 'Weak',
-                           'Reserve', 'Ornery', 'Chance', 'Morphing', 'Focus',
-                           'Warrior', 'Slow', 'Unique', 'Stinger', 'R Swing',
-                           'S Swing', 'T Swing', 'U Swing', 'V Swing',
-                           'W Swing', 'X Swing', 'Y Swing', 'Z Swing', }
+
 
 list_of_fortunes = [
   '/usr/local/share/games/fortunes/art',
@@ -154,6 +149,7 @@ class BMAIBagels(object):
     self.buttons = []
     self.filter = filter
     self.doshuffle = shuffle
+    self.bmai = BMAI()
 
   def start_monitor(self):
     self.monitor.start(handle_active=self.monitor_handler,
@@ -173,7 +169,7 @@ class BMAIBagels(object):
     theirskills = self.buttons[game['opponentButtonName']]['dieTypes'] + \
                   self.buttons[game['opponentButtonName']]['dieSkills']
     supportset = set(myskills + theirskills)
-    disallowedset = supportset - set_of_supported_skills
+    disallowedset = supportset - bmai_supported_skills
     if len(disallowedset) > 0:
       print(f"I don't think we support the following: {disallowedset}")
       action = "reject"
@@ -205,7 +201,9 @@ class BMAIBagels(object):
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
     # or the other player was forced to pass
-    self.monitor_handler(game, calc_other_side=True)
+    self.monitor_handler(game, calc_other_side=False)
+    # someday use 'calc_other_side' to determine the new odds of winning.
+    # this will be don by making the other players move, extracting odds, and calculating the inverse odds
 
   @func_set_timeout(3600)
   def exec_bmai(self, input, game, state):
