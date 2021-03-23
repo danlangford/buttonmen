@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import random
-from os import path
+from os import path, listdir
 from subprocess import Popen, PIPE
 from bmaipy import BMAI, bmai_supported_skills
 
@@ -18,130 +18,45 @@ from func_timeout import func_set_timeout, FunctionTimedOut
 # focus doesnt work when BMAI is running on linux for some reason.
 # need to no accept games that have some specials skills we cant account for (Japanese Beetle)
 
+always_odds = [item.lower() for item in
+               ['Bagels', 'devious', 'AnnoDomini', 'ElihuRoot']]
 
-
-
-list_of_fortunes = [
-  '/usr/local/share/games/fortunes/art',
-  '/usr/local/share/games/fortunes/ascii-art',
-  '/usr/local/share/games/fortunes/computers',
-  '/usr/local/share/games/fortunes/cookie',
-  '/usr/local/share/games/fortunes/definitions',
-  # '/usr/local/share/games/fortunes/drugs',
-  '/usr/local/share/games/fortunes/education',
-  # '/usr/local/share/games/fortunes/ethnic',
-  '/usr/local/share/games/fortunes/food',
-  '/usr/local/share/games/fortunes/fortunes',
-  '/usr/local/share/games/fortunes/goedel',
-  '/usr/local/share/games/fortunes/humorists',
-  '/usr/local/share/games/fortunes/kids',
-  '/usr/local/share/games/fortunes/law',
-  '/usr/local/share/games/fortunes/linuxcookie',
-  '/usr/local/share/games/fortunes/literature',
-  '/usr/local/share/games/fortunes/love',
-  '/usr/local/share/games/fortunes/magic',
-  '/usr/local/share/games/fortunes/medicine',
-  # '/usr/local/share/games/fortunes/men-women',
-  '/usr/local/share/games/fortunes/miscellaneous',
-  '/usr/local/share/games/fortunes/news',
-  '/usr/local/share/games/fortunes/people',
-  '/usr/local/share/games/fortunes/pets',
-  '/usr/local/share/games/fortunes/platitudes',
-  # '/usr/local/share/games/fortunes/politics',
-  '/usr/local/share/games/fortunes/riddles',
-  '/usr/local/share/games/fortunes/science',
-  '/usr/local/share/games/fortunes/songs-poems',
-  '/usr/local/share/games/fortunes/sports',
-  '/usr/local/share/games/fortunes/startrek',
-  # '/usr/local/share/games/fortunes/translate-me',
-  '/usr/local/share/games/fortunes/wisdom',
-  '/usr/local/share/games/fortunes/work',
-  '/usr/local/share/games/fortunes/zippy',
-] if path.isfile('/usr/local/share/games/fortunes/fortunes') else [
-  '/usr/share/games/fortunes/art',
-  '/usr/share/games/fortunes/ascii-art',
-  '/usr/share/games/fortunes/computers',
-  '/usr/share/games/fortunes/cookie',
-  '/usr/share/games/fortunes/definitions',
-  '/usr/share/games/fortunes/disclaimer',
-  # '/usr/share/games/fortunes/drugs',
-  '/usr/share/games/fortunes/education',
-  # '/usr/share/games/fortunes/ethnic',
-  '/usr/share/games/fortunes/food',
-  '/usr/share/games/fortunes/fortunes',
-  '/usr/share/games/fortunes/goedel',
-  '/usr/share/games/fortunes/humorists',
-  '/usr/share/games/fortunes/kids',
-  # '/usr/share/games/fortunes/knghtbrd',
-  '/usr/share/games/fortunes/law',
-  '/usr/share/games/fortunes/linuxcookie',
-  '/usr/share/games/fortunes/linux',
-  '/usr/share/games/fortunes/literature',
-  '/usr/share/games/fortunes/love',
-  '/usr/share/games/fortunes/magic',
-  '/usr/share/games/fortunes/medicine',
-  # '/usr/share/games/fortunes/men-women',
-  '/usr/share/games/fortunes/miscellaneous',
-  '/usr/share/games/fortunes/news',
-  '/usr/share/games/fortunes/paradoxum',
-  '/usr/share/games/fortunes/people',
-  '/usr/share/games/fortunes/perl',
-  '/usr/share/games/fortunes/pets',
-  '/usr/share/games/fortunes/platitudes',
-  # '/usr/share/games/fortunes/politics',
-  '/usr/share/games/fortunes/pratchett',
-  '/usr/share/games/fortunes/riddles',
-  '/usr/share/games/fortunes/science',
-  '/usr/share/games/fortunes/songs-poems',
-  '/usr/share/games/fortunes/sports',
-  '/usr/share/games/fortunes/startrek',
-  # '/usr/share/games/fortunes/translate-me',
-  '/usr/share/games/fortunes/tao',
-  '/usr/share/games/fortunes/wisdom',
-  '/usr/share/games/fortunes/work',
-  '/usr/share/games/fortunes/zippy',
-]
-
-always_odds = [item.lower() for item in ['Bagels','devious','AnnoDomini','ElihuRoot']]
-
-
-# TODO consider shipping with own fortune files in the future
 
 def parse_args():
   parser = argparse.ArgumentParser()
   parser.add_argument(
-    "-c", "--config",
-    help="config file containing site parameters",
-    type=str, default=".bmrc"
+      "-c", "--config",
+      help="config file containing site parameters",
+      type=str, default=".bmrc"
   )
   parser.add_argument(
-    "-s", "--site",
-    help="buttonmen site to access",
-    type=str, default="bmai"
+      "-s", "--site",
+      help="buttonmen site to access",
+      type=str, default="bmai"
   )
   parser.add_argument(
-    "-f", "--filter",
-    help="filter out games",
-    type=str, default="all", choices=["all", "odd", "even"]
+      "-f", "--filter",
+      help="filter out games",
+      type=str, default="all", choices=["all", "odd", "even"]
   )
   parser.add_argument(
-    "-r", "--random",
-    help="randomize game list", default=False, action='store_true',
-    dest='random'
+      "-r", "--random",
+      help="randomize game list", default=False, action='store_true',
+      dest='random'
   )
   parser.add_argument(
-    "-g", "--gameid",
-    help="run on 1 specific game",
-    type=int
+      "-g", "--gameid",
+      help="run on 1 specific game",
+      type=int
   )
   return parser.parse_args()
 
 
 class BMAIBagels(object):
   def __init__(self,
-    client: bmutils.BMClientParser,
-    filter="all",
-    shuffle=False):
+      client: bmutils.BMClientParser,
+      filter="all",
+      shuffle=False):
     self.client = client
     self.monitor = monitor.Monitor(self.client)
     self.game_data = game_data.GameData(self.client)
@@ -150,6 +65,7 @@ class BMAIBagels(object):
     self.filter = filter
     self.doshuffle = shuffle
     self.bmai = BMAI()
+    self.utils = SomeUtils()
 
   def start_monitor(self):
     self.monitor.start(handle_active=self.monitor_handler,
@@ -332,7 +248,7 @@ class BMAIBagels(object):
     return retval.status == 'ok'
 
   def submit_attack(self, game, type, source, target, turbo_select,
-    copyright=None, winOdds=None, stats=None):
+      copyright=None, winOdds=None, stats=None):
     my_idx = game['activePlayerIdx']
     their_idx = 0 if my_idx == 1 else 1
     dieSelects = self._generate_attack_array(game, my_idx, their_idx,
@@ -354,14 +270,14 @@ class BMAIBagels(object):
     return retval.status == 'ok'
 
   def _generate_attack_array(self, game, my_idx, their_idx, attackers,
-    defenders):
+      defenders):
     attack = {}
     for i in range(len(game['playerDataArray'][my_idx]['activeDieArray'])):
       attack[f'playerIdx_{my_idx:d}_dieIdx_{i:d}'] = True if str(
-        i) in attackers else False
+          i) in attackers else False
     for i in range(len(game['playerDataArray'][their_idx]['activeDieArray'])):
       attack[f'playerIdx_{their_idx:d}_dieIdx_{i:d}'] = True if str(
-        i) in defenders else False
+          i) in defenders else False
     return attack
 
   def determineChat(self, game, copyright, winOdds=None, stats=None):
@@ -400,20 +316,27 @@ class BMAIBagels(object):
       elif stats is not None and 'stats' in lasttheirmessage.lower():
         retval = stats
       elif winOdds is not None and (
-        'win?' in lasttheirmessage.lower() or 'odds' in lasttheirmessage.lower() or
-        game['opponent']['playerName'].lower() in always_odds):
+          'win?' in lasttheirmessage.lower() or 'odds' in lasttheirmessage.lower() or
+          game['opponent']['playerName'].lower() in always_odds):
         retval = f'{winOdds}% chance to win (before the re-roll)'
       else:
-        retval = fortune.get_random_fortune(random.choice(list_of_fortunes))
+        retval = self.utils.get_random_fortune()
     elif game['opponent']['playerName'].lower() in always_odds:
       retval = f'{winOdds}% chance to win'
-
 
     if not retval:
       return ''
     else:
       print(retval)
       return f'[code]{retval}[/code]'
+
+
+class SomeUtils:
+  def get_fortune_file(self):
+    return "./fortunes/" + random.choice(listdir("./fortunes")).replace(".dat","")
+
+  def get_random_fortune(self):
+    return fortune.get_random_fortune(self.get_fortune_file())
 
 
 if __name__ == '__main__':
