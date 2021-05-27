@@ -112,7 +112,7 @@ class BMAIBagels(object):
       self.exec_bmai(bmai_input, game=game, state=game['gameState'])
     except FunctionTimedOut:
       print(f"timed out in {game['gameId']}")
-      self.bad_games.append(game['gameId'])
+      self.bad_game(game['gameId'], bmai_input)
 
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
@@ -121,7 +121,7 @@ class BMAIBagels(object):
     # someday use 'calc_other_side' to determine the new odds of winning.
     # this will be don by making the other players move, extracting odds, and calculating the inverse odds
 
-  @func_set_timeout(3600)
+  @func_set_timeout(360000)
   def exec_bmai(self, input, game, state):
     bmai = Popen(['./bmai'], stdin=PIPE, stdout=PIPE, stderr=PIPE,
                  universal_newlines=True)
@@ -183,7 +183,7 @@ class BMAIBagels(object):
     if printed:
       print('')
     if not acted:
-      self.bad_games.append(game['gameId'])
+      self.bad_game(game['gameId'], input)
     bmai.stdin.flush()
     bmai.stdin.close()
     bmai.stdout.flush()
@@ -329,6 +329,14 @@ class BMAIBagels(object):
     else:
       print(retval)
       return f'[code]{retval}[/code]'
+
+  def bad_game(self, game_id, game_input):
+    self.bad_games.append(game_id)
+    text_file = open(f"{game_id}input.txt", "wt")
+    n = text_file.write(game_input)
+    text_file.close()
+
+
 
 
 class SomeUtils:

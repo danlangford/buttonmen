@@ -4,6 +4,8 @@ import operator
 import os
 import sys
 from datetime import datetime, date, timezone, timedelta
+from typing import Any, Callable
+
 import requests
 from bs4 import BeautifulSoup
 from trueskill import Rating, rate_1vs1, expose
@@ -18,20 +20,93 @@ from lib.bmutils import BMClientParser
 # CONFIG
 bmrc = ".bmrc"
 site = "www"
+print_details = False
+highlight_general = True
+highlight_player = None
+highlight_fmt = 'forum'
+
+class Strategy(object):
+  qualifies = None
+
+  def __init__(self, f):
+    self.qualifies = f
+
 
 # options: all, tl, fair, tlopen, hitlistfeb21
-_strategy = "hitlistmar21"
-_start_date = date(2021, 3, 1)
-_stop_date = date(2021, 3, 20)
-# _stop_date = date(2021, 3, 1) - timedelta(days=1)
+_strategy = "hitlistmay21"
+_strategies = {"all": Strategy(
+    lambda game: True),
+  "tl": Strategy(
+      lambda game: buttons[game['buttonNameA']][
+                     'isTournamentLegal'] and \
+                   buttons[game['buttonNameB']][
+                     'isTournamentLegal']),
+  "fair": Strategy(
+      lambda game: 40 <= retrieved_button_stats[
+        game['buttonNameA']].rate <= 60 and
+                   retrieved_button_stats[
+                     game[
+                       'buttonNameA']].count > 10 and
+                   40 <= retrieved_button_stats[
+                     game[
+                       'buttonNameB']].rate <= 60 and
+                   retrieved_button_stats[
+                     game['buttonNameB']].count > 10),
+  "tlopen": Strategy(
+      lambda game: buttons[game['buttonNameA']][
+                     'buttonSet'] in tlopen_sets and
+                   buttons[game['buttonNameB']][
+                     'buttonSet'] in tlopen_sets),
+  "hitlistfeb21": Strategy(
+      lambda game: buttons[game['buttonNameA']][
+                     'buttonSet'] in hitlistfeb21_sets and
+                   buttons[game['buttonNameB']][
+                     'buttonSet'] in hitlistfeb21_sets),
+  "hitlistmar21": Strategy(
+      lambda game: buttons[game['buttonNameA']][
+                     'buttonName'] in hitlistmar21_buttons and
+                   buttons[game['buttonNameB']][
+                     'buttonName'] in hitlistmar21_buttons),
+  "hitlistapr21": Strategy(
+      lambda game: buttons[game['buttonNameA']][
+                     'buttonName'] in hitlistapr21_buttons and
+                   buttons[game['buttonNameB']][
+                     'buttonName'] in hitlistapr21_buttons),
+  "hitlistmay21": Strategy(
+      lambda game: (buttons[game['buttonNameA']][
+                      'buttonName'] in hitlistmay21_peloton and
+                    buttons[game['buttonNameB']][
+                      'buttonName'] in hitlistmay21_diceland) or
+                   (buttons[game['buttonNameA']][
+                      'buttonName'] in hitlistmay21_diceland and
+                    buttons[game['buttonNameB']][
+                      'buttonName'] in hitlistmay21_peloton)),
+
+}
+
+_start_date = date(2021, 5, 1)
+# _stop_date = date(2021, 5, 20)
+# _stop_date = date(2021, 5, 20)
+_stop_date = date(2021, 6, 1) - timedelta(days=1)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
                "SydCon 10"]
 hitlistfeb21_sets = ["Free Radicals", "Chicago Crew", "Metamorphers"]
-hitlistmar21_buttons = ["amica", "bigevildan", "Downen", "Hooloovoo", "Jasyeman", "jgenzano", "juelki", "lunatic", "moekon", "perlmunkee", "roujin27", "sanny", "Yagharek"]
+hitlistmar21_buttons = ["amica", "bigevildan", "Downen", "Hooloovoo",
+                        "Jasyeman", "jgenzano", "juelki", "lunatic", "moekon",
+                        "perlmunkee", "roujin27", "sanny", "Yagharek"]
+hitlistapr21_buttons = ["Vermont", "Washington", "Minnesota", "eon", "Famine",
+                        "Fuyuko", "Captain Bingo", "Johnny", "Phuong", "Calmon",
+                        "Bull", "Darrin", "opedog"]
+hitlistmay21_peloton = ["Julia", "Doyle", "Floriano", "Antonio", "Timea",
+                        "Mariusz", "Roger", "Orlando"]
+hitlistmay21_diceland = ["Z-Don", "Micro", "Crysis", "Buck", "Cass", "Golo"]
 
-# banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels', 'buttonbot2']
-banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'buttonbot2']
+banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels',
+                  'buttonbot2']
+
+
+# banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'buttonbot2']
 
 
 # END CONFIG
@@ -117,7 +192,46 @@ def do_the_ratings(game):
   wrate = ratings.get(wplay, Rating())
   lrate = ratings.get(lplay, Rating())
 
+  if highlight_player in [wplay, lplay] or highlight_general:
+    wrate0=wrate
+    lrate0=lrate
+    wexpo0=expose(wrate0)
+    lexpo0=expose(lrate0)
+
   wrate, lrate = rate_1vs1(wrate, lrate)
+
+  if highlight_player in [wplay, lplay] or highlight_general:
+    wrate1=wrate
+    lrate1=lrate
+
+    wmudiff = wrate1.mu-wrate0.mu
+    lmudiff = lrate1.mu-lrate0.mu
+    wsigmadiff = wrate1.sigma-wrate0.sigma
+    lsigmadiff = lrate1.sigma-lrate0.sigma
+
+    wexpo1=expose(wrate1)
+    lexpo1=expose(lrate1)
+    wexpodiff=wexpo1-wexpo0
+    lexpodiff=lexpo1-lexpo0
+
+#   and (wexpo1>lexpo1 or wrate1.mu > lrate1.mu)
+
+    worth_highlighting = (wrate0.sigma<3.75 and lrate0.sigma<3.75 and (lexpo0 - wexpo0 > 3 ) and players_total_game_count.get(wplay,0)>=4 and players_total_game_count.get(lplay,0)>=4 )
+
+    if highlight_player in [wplay, lplay] or worth_highlighting:
+      if highlight_fmt=='forum':
+        if print_details:
+          wprint = f"({wplay}):{wbutt} μ={wrate0.mu:0.2f}{'+' if wmudiff>=0 else ''}{wmudiff:0.2f} σ={wrate0.sigma:0.2f}{'+' if wsigmadiff>=0 else ''}{wsigmadiff:0.2f} x={wexpo0:0.2f}{'+' if wexpodiff>=0 else ''}{wexpodiff:0.2f}"
+          lprint = f"({lplay}):{lbutt} μ={lrate0.mu:0.2f}{'+' if lmudiff>=0 else ''}{lmudiff:0.2f} σ={lrate0.sigma:0.2f}{'+' if lsigmadiff>=0 else ''}{lsigmadiff:0.2f} x={lexpo0:0.2f}{'+' if lexpodiff>=0 else ''}{lexpodiff:0.2f}"
+        else:
+          wprint = f"({wplay}):{wbutt} x={wexpo0:0.2f}{'+' if wexpodiff>=0 else ''}{wexpodiff:0.2f}"
+          lprint = f"({lplay}):{lbutt} x={lexpo0:0.2f}{'+' if lexpodiff>=0 else ''}{lexpodiff:0.2f}"
+        print(f"[game={game['gameId']}] {wprint} vs {lprint}")
+      elif highlight_fmt=='csv':
+        wprint = f"{wplay},{wbutt},{wrate0.mu:0.2f},{'+' if wmudiff>=0 else ''}{wmudiff:0.2f},{wrate0.sigma:0.2f},{'+' if wsigmadiff>=0 else ''}{wsigmadiff:0.2f},{wexpo0:0.2f},{'+' if wexpodiff>=0 else ''}{wexpodiff:0.2f}"
+        lprint = f"{lplay},{lbutt},{lrate0.mu:0.2f},{'+' if lmudiff>=0 else ''}{lmudiff:0.2f},{lrate0.sigma:0.2f},{'+' if lsigmadiff>=0 else ''}{lsigmadiff:0.2f},{lexpo0:0.2f},{'+' if lexpodiff>=0 else ''}{lexpodiff:0.2f}"
+        print(f"{game['gameId']},{wprint},{lprint}")
+
 
   ratings[wplay] = wrate
   ratings[lplay] = lrate
@@ -164,7 +278,7 @@ def collect_button_stats(game):
   observed_button_stats[game['buttonNameB']] = s_b
 
 
-def collect_qualifying_games(strategy, status, start_date, stop_date):
+def collect_qualifying_games(strategy: Strategy, status, start_date, stop_date):
   total_games_considered = 0
   keep_going = True
   size = 1000
@@ -172,7 +286,8 @@ def collect_qualifying_games(strategy, status, start_date, stop_date):
   results = []
 
   while keep_going:
-    print(f"fetching page {page} of size {size}")
+    # print(f"fetching page {page} of size {size}")
+    print('.')
     search = bm.wrap_search_game_history(
         sortColumn="lastMove",
         searchDirection="ASC",
@@ -197,38 +312,8 @@ def collect_qualifying_games(strategy, status, start_date, stop_date):
         'playerNameB'] in banned_players:
         continue
 
-      if strategy == "tl":
-        if buttons[game['buttonNameA']]['isTournamentLegal'] and \
-            buttons[game['buttonNameB']]['isTournamentLegal']:
-          results.append(game)
-
-      elif strategy == "fair":
-        if 40 <= retrieved_button_stats[game['buttonNameA']].rate <= 60 and \
-            retrieved_button_stats[game['buttonNameA']].count > 10 and \
-            40 <= retrieved_button_stats[game['buttonNameB']].rate <= 60 and \
-            retrieved_button_stats[game['buttonNameB']].count > 10:
-          results.append(game)
-
-      elif strategy == "tlopen":
-        if buttons[game['buttonNameA']]['buttonSet'] in tlopen_sets and \
-            buttons[game['buttonNameB']]['buttonSet'] in tlopen_sets:
-          results.append(game)
-
-      elif strategy == "hitlistfeb21":
-        if buttons[game['buttonNameA']]['buttonSet'] in hitlistfeb21_sets and \
-            buttons[game['buttonNameB']]['buttonSet'] in hitlistfeb21_sets:
-          results.append(game)
-
-      elif strategy == "hitlistmar21":
-        if buttons[game['buttonNameA']]['buttonName'] in hitlistmar21_buttons and \
-            buttons[game['buttonNameB']]['buttonName'] in hitlistmar21_buttons:
-          results.append(game)
-
-      elif strategy == "all":
+      if strategy.qualifies(game):
         results.append(game)
-
-      else:
-        raise Exception("must use a proper strategy for strategy")
 
     if len(search['games']) == 0:
       keep_going = False
@@ -239,12 +324,17 @@ def collect_qualifying_games(strategy, status, start_date, stop_date):
 
 
 def rate_and_stats(games):
+  if highlight_general or highlight_player is not None:
+    print("[quote][b]HIGHLIGHTS[/b]")
   for game in games:
     do_the_ratings(game)
     collect_button_stats(game)
-
+  if highlight_general or highlight_player is not None:
+    print("[/quote]")
 
 def print_report():
+  if print_details:
+    print("PLACE=leaderboard numbering | EXPOSURE=how leaderboard is sorted, Mu-3*Sigma, approaches 25 | MU=estimated skill rating, everybody starts at 25 | SIGMA=confidense (inverse), everybody starts at 8.33… | MEDAL=static Exposure goal lines for personal acheivment, gold>=24, silver>=20, bronze>=10")
   print("[quote][b]LEADERBOARD[/b]")
 
   # leaderboard = sorted(ratings, key=env.expose, reverse=True)
@@ -268,7 +358,10 @@ def print_report():
     tot_wins = players_total_win_count.get(k, 0)
 
     tot_win_rate = tot_wins / tot_games * 100
-    tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 else ''
+    if print_details:
+      tot_win_rate = f', win_rate={tot_win_rate:.0f}%'
+    else:
+      tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 else ''
 
     # first [0] gets the first (max when reverse=true) in the list
     # second [0] gets the KEY from the KEY/value pair
@@ -305,10 +398,14 @@ def print_report():
       else:
         medal = "  "
 
-    print(
-        f"{num:2} [{exposure:5.2f}] {medal} [player={k}]({tot_games}{tot_win_rate}) {interesting}")
+    if print_details:
+      print(f"place={num:2} exposure=[{exposure:0.2f}] mu={ratings[k].mu:0.2f} sigma={ratings[k].sigma:0.2f} medal={medal} player=[player={k}](games={tot_games}{tot_win_rate}) {interesting}")
+    else:
+      print(f"{num:2} [{exposure:5.2f}] {medal} [player={k}]({tot_games}{tot_win_rate}) {interesting}")
 
   print("[/quote]\n")
+  if print_details:
+    print("the PLACEMENT table is sorted by number of placement matches, not by Exposure. Exposure is shown so you can see where they might slot into the rest of the leaderboard")
   print("[quote][b]PLACEMENT[/b]")
 
   leaderboard_placement = dict(
@@ -326,9 +423,15 @@ def print_report():
     tot_wins = players_total_win_count.get(k, 0)
 
     tot_win_rate = tot_wins / tot_games * 100
-    tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 and tot_games > 2 else ''
-    print(
-        f"[player={k}]({tot_games}{tot_win_rate})")
+    if print_details:
+      tot_win_rate = f', win_rate={tot_win_rate:.0f}%'
+    else:
+      tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 and tot_games > 2 else ''
+
+    if print_details:
+      print(f"exposure=[{expose(ratings[k]):0.2f}] mu={ratings[k].mu:0.2f} sigma={ratings[k].sigma:0.2f} player=[player={k}](games={tot_games}{tot_win_rate})")
+    else:
+      print(f"[player={k}]({tot_games}{tot_win_rate})")
 
   print('[/quote]')
 
@@ -345,7 +448,8 @@ if __name__ == "__main__":
   # init some global state
   bm = login()
   buttons = bm.wrap_load_button_names()
-  completed_games = collect_qualifying_games(_strategy, "COMPLETE", _start_date,
+  completed_games = collect_qualifying_games(_strategies[_strategy],
+                                             "COMPLETE", _start_date,
                                              _stop_date)
 
   print(
@@ -356,7 +460,9 @@ if __name__ == "__main__":
 
   print_report()
 
-  active_games = collect_qualifying_games(_strategy, "ACTIVE", _start_date,
+  active_games = collect_qualifying_games(_strategies[_strategy],
+                                          "ACTIVE",
+                                          _start_date,
                                           _stop_date)
   print(
-    f"there are currently {len(active_games)} qualifying games still in progress")
+      f"there are currently {len(active_games)} qualifying games still in progress")
