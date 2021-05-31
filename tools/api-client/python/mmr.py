@@ -2,20 +2,12 @@
 
 import operator
 import os
-import sys
 from datetime import datetime, date, timezone, timedelta
-from typing import Any, Callable
 
 import requests
 from bs4 import BeautifulSoup
-from trueskill import Rating, rate_1vs1, expose
-
-# WEIRD IMPORT
-bmutilspath = "./lib"
-sys.path.append(os.path.expanduser(bmutilspath).rstrip("/"))
+from trueskill import Rating, rate, expose
 from lib.bmutils import BMClientParser
-
-# END WEIRD IMPORT
 
 # CONFIG
 bmrc = ".bmrc"
@@ -23,7 +15,10 @@ site = "www"
 print_details = False
 highlight_general = True
 highlight_player = None
-highlight_fmt = 'forum'
+highlight_fmt = 'csv'
+print_noteworthy = True
+print_medals = True
+print_winrates = "some" # some, all, none
 
 class Strategy(object):
   qualifies = None
@@ -87,7 +82,7 @@ _strategies = {"all": Strategy(
 _start_date = date(2021, 5, 1)
 # _stop_date = date(2021, 5, 20)
 # _stop_date = date(2021, 5, 20)
-_stop_date = date(2021, 6, 1) - timedelta(days=1)
+_stop_date = date(2121, 6, 1) - timedelta(days=1)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
                "SydCon 10"]
@@ -102,11 +97,11 @@ hitlistmay21_peloton = ["Julia", "Doyle", "Floriano", "Antonio", "Timea",
                         "Mariusz", "Roger", "Orlando"]
 hitlistmay21_diceland = ["Z-Don", "Micro", "Crysis", "Buck", "Cass", "Golo"]
 
-banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels',
-                  'buttonbot2']
+#banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels', 'buttonbot2']
 
 
 # banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'buttonbot2']
+banned_players = []
 
 
 # END CONFIG
@@ -147,11 +142,15 @@ class RStat(object):
 
 bm = {}
 buttons = {}
-ratings = {}
+player_ratings = {}
+button_ratings = {}
 observed_button_stats = {}
 players_total_game_count = {}
+buttons_total_game_count = {}
 players_total_win_count = {}
+buttons_total_win_count = {}
 players_button_counts = {}
+buttons_player_counts = {}
 
 total_games_included = 0
 
@@ -185,77 +184,134 @@ def determine_winner(game):
 
 
 def do_the_ratings(game):
-  global ratings
+  global player_ratings
+  global button_ratings
   global players_total_game_count
+  global buttons_total_game_count
+  global players_total_win_count
+  global buttons_total_win_count
   global total_games_included
+  global players_button_counts
+  global buttons_player_counts
+
   wplay, wbutt, lplay, lbutt = determine_winner(game)
-  wrate = ratings.get(wplay, Rating())
-  lrate = ratings.get(lplay, Rating())
+  wprate = player_ratings.get(wplay, Rating())
+  lprate = player_ratings.get(lplay, Rating())
+  wbrate = button_ratings.get(wbutt, Rating())
+  lbrate = button_ratings.get(lbutt, Rating())
 
   if highlight_player in [wplay, lplay] or highlight_general:
-    wrate0=wrate
-    lrate0=lrate
-    wexpo0=expose(wrate0)
-    lexpo0=expose(lrate0)
+    wprate0=wprate
+    lprate0=lprate
+    wpexpo0=expose(wprate0)
+    lpexpo0=expose(lprate0)
 
-  wrate, lrate = rate_1vs1(wrate, lrate)
+    wbrate0=wbrate
+    lbrate0=lbrate
+    wbexpo0=expose(wbrate0)
+    lbexpo0=expose(lbrate0)
+
+  (wprate,wbrate), (lprate,lbrate) = rate([[wprate,wbrate], [lprate,lbrate]])
 
   if highlight_player in [wplay, lplay] or highlight_general:
-    wrate1=wrate
-    lrate1=lrate
+    wprate1=wprate
+    lprate1=lprate
 
-    wmudiff = wrate1.mu-wrate0.mu
-    lmudiff = lrate1.mu-lrate0.mu
-    wsigmadiff = wrate1.sigma-wrate0.sigma
-    lsigmadiff = lrate1.sigma-lrate0.sigma
+    wbrate1=wbrate
+    lbrate1=lbrate
 
-    wexpo1=expose(wrate1)
-    lexpo1=expose(lrate1)
-    wexpodiff=wexpo1-wexpo0
-    lexpodiff=lexpo1-lexpo0
+    wpmudiff = wprate1.mu-wprate0.mu
+    lpmudiff = lprate1.mu-lprate0.mu
+    wpsigmadiff = wprate1.sigma-wprate0.sigma
+    lpsigmadiff = lprate1.sigma-lprate0.sigma
 
-#   and (wexpo1>lexpo1 or wrate1.mu > lrate1.mu)
+    wpexpo1=expose(wprate1)
+    lpexpo1=expose(lprate1)
+    wpexpodiff=wpexpo1-wpexpo0
+    lpexpodiff=lpexpo1-lpexpo0
 
-    worth_highlighting = (wrate0.sigma<3.75 and lrate0.sigma<3.75 and (lexpo0 - wexpo0 > 3 ) and players_total_game_count.get(wplay,0)>=4 and players_total_game_count.get(lplay,0)>=4 )
+#   and (wpexpo1>lpexpo1 or wprate1.mu > lprate1.mu)
+
+    worth_highlighting = (wprate0.sigma<3.75 and lprate0.sigma<3.75 and (lpexpo0 - wpexpo0 > 3 ) and players_total_game_count.get(wplay,0)>=4 and players_total_game_count.get(lplay,0)>=4 )
+    #worth_highlighting=True
 
     if highlight_player in [wplay, lplay] or worth_highlighting:
       if highlight_fmt=='forum':
         if print_details:
-          wprint = f"({wplay}):{wbutt} μ={wrate0.mu:0.2f}{'+' if wmudiff>=0 else ''}{wmudiff:0.2f} σ={wrate0.sigma:0.2f}{'+' if wsigmadiff>=0 else ''}{wsigmadiff:0.2f} x={wexpo0:0.2f}{'+' if wexpodiff>=0 else ''}{wexpodiff:0.2f}"
-          lprint = f"({lplay}):{lbutt} μ={lrate0.mu:0.2f}{'+' if lmudiff>=0 else ''}{lmudiff:0.2f} σ={lrate0.sigma:0.2f}{'+' if lsigmadiff>=0 else ''}{lsigmadiff:0.2f} x={lexpo0:0.2f}{'+' if lexpodiff>=0 else ''}{lexpodiff:0.2f}"
+          wprint = f"({wplay}):{wbutt} μ={wprate0.mu:0.2f}{'+' if wpmudiff>=0 else ''}{wpmudiff:0.2f} σ={wprate0.sigma:0.2f}{'+' if wpsigmadiff>=0 else ''}{wpsigmadiff:0.2f} x={wpexpo0:0.2f}{'+' if wpexpodiff>=0 else ''}{wpexpodiff:0.2f}"
+          lprint = f"({lplay}):{lbutt} μ={lprate0.mu:0.2f}{'+' if lpmudiff>=0 else ''}{lpmudiff:0.2f} σ={lprate0.sigma:0.2f}{'+' if lpsigmadiff>=0 else ''}{lpsigmadiff:0.2f} x={lpexpo0:0.2f}{'+' if lpexpodiff>=0 else ''}{lpexpodiff:0.2f}"
         else:
-          wprint = f"({wplay}):{wbutt} x={wexpo0:0.2f}{'+' if wexpodiff>=0 else ''}{wexpodiff:0.2f}"
-          lprint = f"({lplay}):{lbutt} x={lexpo0:0.2f}{'+' if lexpodiff>=0 else ''}{lexpodiff:0.2f}"
+          wprint = f"({wplay}):{wbutt} x={wpexpo0:0.2f}{'+' if wpexpodiff>=0 else ''}{wpexpodiff:0.2f}"
+          lprint = f"({lplay}):{lbutt} x={lpexpo0:0.2f}{'+' if lpexpodiff>=0 else ''}{lpexpodiff:0.2f}"
         print(f"[game={game['gameId']}] {wprint} vs {lprint}")
       elif highlight_fmt=='csv':
-        wprint = f"{wplay},{wbutt},{wrate0.mu:0.2f},{'+' if wmudiff>=0 else ''}{wmudiff:0.2f},{wrate0.sigma:0.2f},{'+' if wsigmadiff>=0 else ''}{wsigmadiff:0.2f},{wexpo0:0.2f},{'+' if wexpodiff>=0 else ''}{wexpodiff:0.2f}"
-        lprint = f"{lplay},{lbutt},{lrate0.mu:0.2f},{'+' if lmudiff>=0 else ''}{lmudiff:0.2f},{lrate0.sigma:0.2f},{'+' if lsigmadiff>=0 else ''}{lsigmadiff:0.2f},{lexpo0:0.2f},{'+' if lexpodiff>=0 else ''}{lexpodiff:0.2f}"
+        wprint = f"{wplay},{wbutt},{wprate0.mu:0.2f},{'+' if wpmudiff>=0 else ''}{wpmudiff:0.2f},{wprate0.sigma:0.2f},{'+' if wpsigmadiff>=0 else ''}{wpsigmadiff:0.2f},{wpexpo0:0.2f},{'+' if wpexpodiff>=0 else ''}{wpexpodiff:0.2f}"
+        lprint = f"{lplay},{lbutt},{lprate0.mu:0.2f},{'+' if lpmudiff>=0 else ''}{lpmudiff:0.2f},{lprate0.sigma:0.2f},{'+' if lpsigmadiff>=0 else ''}{lpsigmadiff:0.2f},{lpexpo0:0.2f},{'+' if lpexpodiff>=0 else ''}{lpexpodiff:0.2f}"
         print(f"{game['gameId']},{wprint},{lprint}")
 
+  player_ratings[wplay] = wprate
+  player_ratings[lplay] = lprate
+  if wbutt==lbutt:
+    #print("not counting mirror matches")
+    pass
+  else:
+    button_ratings[wbutt] = wbrate
+    button_ratings[lbutt] = lbrate
 
-  ratings[wplay] = wrate
-  ratings[lplay] = lrate
+  # update winner & loser player counts
   players_total_win_count[wplay] = players_total_win_count.get(wplay, 0) + 1
   players_total_game_count[wplay] = players_total_game_count.get(wplay, 0) + 1
   players_total_game_count[lplay] = players_total_game_count.get(lplay, 0) + 1
+
+  # update winner & loser button counts
+  buttons_total_win_count[wbutt] = buttons_total_win_count.get(wbutt, 0) + 1
+  buttons_total_game_count[wbutt] = buttons_total_game_count.get(wbutt, 0) + 1
+  buttons_total_game_count[lbutt] = buttons_total_game_count.get(lbutt, 0) + 1
+
   total_games_included += 1
 
-  w_butt_counts = players_button_counts.get(wplay, {'freq': {}, 'best': {},
+  # update more winner player stats about buttons
+  wp_button_counts = players_button_counts.get(wplay, {'freq': {}, 'best': {},
                                                     'rate': {}})
-  w_butt_counts['freq'][wbutt] = w_butt_counts['freq'].get(wbutt, 0) + 1
-  w_butt_counts['best'][wbutt] = w_butt_counts['best'].get(wbutt, 0) + 1
-  w_butt_counts['rate'][wbutt] = w_butt_counts['best'][wbutt] / \
-                                 w_butt_counts['freq'][wbutt]
-  players_button_counts[wplay] = w_butt_counts
+  wp_button_counts['freq'][wbutt] = wp_button_counts['freq'].get(wbutt, 0) + 1
+  wp_button_counts['best'][wbutt] = wp_button_counts['best'].get(wbutt, 0) + 1
+  wp_button_counts['rate'][wbutt] = wp_button_counts['best'][wbutt] / \
+                                 wp_button_counts['freq'][wbutt]
+  players_button_counts[wplay] = wp_button_counts
 
-  l_butt_counts = players_button_counts.get(lplay, {'freq': {}, 'best': {},
+
+
+
+  # update more winner button stats about players
+  wb_player_counts = buttons_player_counts.get(wbutt, {'freq': {}, 'best': {},
                                                     'rate': {}})
-  l_butt_counts['freq'][lbutt] = l_butt_counts['freq'].get(lbutt, 0) + 1
-  l_butt_counts['best'][lbutt] = l_butt_counts['best'].get(lbutt,
+  wb_player_counts['freq'][wplay] = wb_player_counts['freq'].get(wplay, 0) + 1
+  wb_player_counts['best'][wplay] = wb_player_counts['best'].get(wplay, 0) + 1
+  wb_player_counts['rate'][wplay] = wb_player_counts['best'][wplay] / \
+                                 wb_player_counts['freq'][wplay]
+  buttons_player_counts[wbutt] = wb_player_counts
+
+
+  # update more loser player stats about buttons
+  lp_button_counts = players_button_counts.get(lplay, {'freq': {}, 'best': {},
+                                                    'rate': {}})
+  lp_button_counts['freq'][lbutt] = lp_button_counts['freq'].get(lbutt, 0) + 1
+  lp_button_counts['best'][lbutt] = lp_button_counts['best'].get(lbutt,
                                                            0)  # dont increment, but make sure the value is populated, even if 0
-  l_butt_counts['rate'][lbutt] = l_butt_counts['best'][lbutt] / \
-                                 l_butt_counts['freq'][lbutt]
-  players_button_counts[lplay] = l_butt_counts
+  lp_button_counts['rate'][lbutt] = lp_button_counts['best'][lbutt] / \
+                                 lp_button_counts['freq'][lbutt]
+  players_button_counts[lplay] = lp_button_counts
+
+
+  # update more loser button stats about players
+  lb_player_counts = buttons_player_counts.get(lbutt, {'freq': {}, 'best': {},
+                                                       'rate': {}})
+  lb_player_counts['freq'][lplay] = lb_player_counts['freq'].get(lplay, 0) + 1
+  lb_player_counts['best'][lplay] = lb_player_counts['best'].get(lplay,
+                                                                 0)  # dont increment, but make sure the value is populated, even if 0
+  lb_player_counts['rate'][lplay] = lb_player_counts['best'][lplay] / \
+                                    lb_player_counts['freq'][lplay]
+  buttons_player_counts[lbutt] = lb_player_counts
 
 
 def collect_button_stats(game):
@@ -332,20 +388,15 @@ def rate_and_stats(games):
   if highlight_general or highlight_player is not None:
     print("[/quote]")
 
-def print_report():
+
+def print_report(ratings, total_game_count, total_win_count, itemized_counts, tag_primary, tag_secondary):
   if print_details:
     print("PLACE=leaderboard numbering | EXPOSURE=how leaderboard is sorted, Mu-3*Sigma, approaches 25 | MU=estimated skill rating, everybody starts at 25 | SIGMA=confidense (inverse), everybody starts at 8.33… | MEDAL=static Exposure goal lines for personal acheivment, gold>=24, silver>=20, bronze>=10")
-  print("[quote][b]LEADERBOARD[/b]")
+  print(f"[quote][b]{tag_primary.upper()} LEADERBOARD[/b]")
 
-  # leaderboard = sorted(ratings, key=env.expose, reverse=True)
-
-  # sigma less than 4
-  # leaderboard = dict(filter(lambda elem: elem[1].sigma < 4.0, ratings.items()))
-  # OR
-  # min games played
   min_games_played = 5
   leaderboard = dict(
-      filter(lambda elem: players_total_game_count[elem[0]] >= min_games_played,
+      filter(lambda elem: total_game_count[elem[0]] >= min_games_played,
              ratings.items()))
 
   leaderboard = {k: v for k, v in
@@ -354,73 +405,80 @@ def print_report():
   listedboard = list(leaderboard)
   for k in leaderboard:
     num = listedboard.index(k) + 1
-    tot_games = players_total_game_count[k]
-    tot_wins = players_total_win_count.get(k, 0)
+    tot_games = total_game_count[k]
+    tot_wins = total_win_count.get(k, 0)
 
     tot_win_rate = tot_wins / tot_games * 100
     if print_details:
       tot_win_rate = f', win_rate={tot_win_rate:.0f}%'
-    else:
+    elif print_winrates=='all':
+      tot_win_rate = f', {tot_win_rate:.0f}%'
+    elif print_winrates=='some':
       tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 else ''
+    else:
+      tot_win_rate = ''
 
     # first [0] gets the first (max when reverse=true) in the list
     # second [0] gets the KEY from the KEY/value pair
     most_played = \
-      sorted(players_button_counts[k]['freq'].items(),
+      sorted(itemized_counts[k]['freq'].items(),
              key=operator.itemgetter(1),
              reverse=True)
     most_won = \
-      sorted(players_button_counts[k]['best'].items(),
+      sorted(itemized_counts[k]['best'].items(),
              key=operator.itemgetter(1),
              reverse=True)
     most_rate = \
-      sorted(players_button_counts[k]['rate'].items(),
+      sorted(itemized_counts[k]['rate'].items(),
              key=operator.itemgetter(1),
              reverse=True)
 
     interesting = ""
-    for bn in players_button_counts[k]['freq']:
-      bc = players_button_counts[k]['freq'][bn]
-      br = players_button_counts[k]['rate'][bn] * 100
-      if bc >= 5 and br > 50:
-        if not interesting.startswith("Noteworthy"):
-          interesting = "Noteworthy: " + interesting
-        interesting += f"[button={bn}]({bc}, {br:.0f}%) "
+    if print_noteworthy:
+      for i_n in itemized_counts[k]['freq']:
+        i_c = itemized_counts[k]['freq'][i_n]
+        i_r = itemized_counts[k]['rate'][i_n] * 100
+        if i_c >= 5 and i_r > 50:
+          if not interesting.startswith("Noteworthy"):
+            interesting = "Noteworthy: " + interesting
+          interesting += f"[{tag_secondary}={i_n}]({i_c}, {i_r:.0f}%) "
 
-      exposure = expose(ratings[k])
+    exposure = expose(ratings[k])
 
+    medal = "medal=" if print_details else ""
+    if print_medals:
       if exposure >= 24.0:
-        medal = "🥇"
+        medal += "🥇"
       elif exposure >= 20.0:
-        medal = "🥈"
+        medal += "🥈"
       elif exposure >= 10.0:
-        medal = "🥉"
+        medal += "🥉"
       else:
-        medal = "  "
+        medal += "  "
 
     if print_details:
-      print(f"place={num:2} exposure=[{exposure:0.2f}] mu={ratings[k].mu:0.2f} sigma={ratings[k].sigma:0.2f} medal={medal} player=[player={k}](games={tot_games}{tot_win_rate}) {interesting}")
+      print(f"place={num:2} exposure=[{exposure:0.2f}] mu={ratings[k].mu:0.2f} sigma={ratings[k].sigma:0.2f} {medal} {tag_primary}=[{tag_primary}={k}](games={tot_games}{tot_win_rate}) {interesting}")
     else:
-      print(f"{num:2} [{exposure:5.2f}] {medal} [player={k}]({tot_games}{tot_win_rate}) {interesting}")
+      print(f"{num:2} [{exposure:5.2f}] {medal} [{tag_primary}={k}]({tot_games}{tot_win_rate}) {interesting}")
 
-  print("[/quote]\n")
+  print("[/quote]")
   if print_details:
     print("the PLACEMENT table is sorted by number of placement matches, not by Exposure. Exposure is shown so you can see where they might slot into the rest of the leaderboard")
-  print("[quote][b]PLACEMENT[/b]")
+  print(f"[quote][b]{tag_primary.upper()} PLACEMENT[/b]")
 
   leaderboard_placement = dict(
-      filter(lambda elem: players_total_game_count[elem[0]] < min_games_played,
+      filter(lambda elem: total_game_count[elem[0]] < min_games_played,
              ratings.items()))
   leaderboard_placement = {k: v for k, v in
                            sorted(leaderboard_placement.items(),
-                                  key=lambda item: players_total_game_count[
+                                  key=lambda item: total_game_count[
                                     item[0]],
                                   reverse=True)}
 
   listedboard_placement = list(leaderboard_placement)
   for k in leaderboard_placement:
-    tot_games = players_total_game_count[k]
-    tot_wins = players_total_win_count.get(k, 0)
+    tot_games = total_game_count[k]
+    tot_wins = total_win_count.get(k, 0)
 
     tot_win_rate = tot_wins / tot_games * 100
     if print_details:
@@ -429,9 +487,9 @@ def print_report():
       tot_win_rate = f', {tot_win_rate:.0f}%' if tot_win_rate > 50 and tot_games > 2 else ''
 
     if print_details:
-      print(f"exposure=[{expose(ratings[k]):0.2f}] mu={ratings[k].mu:0.2f} sigma={ratings[k].sigma:0.2f} player=[player={k}](games={tot_games}{tot_win_rate})")
+      print(f"exposure=[{expose(ratings[k]):0.2f}] mu={ratings[k].mu:0.2f} sigma={ratings[k].sigma:0.2f} {tag_primary}=[{tag_primary}={k}](games={tot_games}{tot_win_rate})")
     else:
-      print(f"[player={k}]({tot_games}{tot_win_rate})")
+      print(f"[{tag_primary}={k}]({tot_games}{tot_win_rate})")
 
   print('[/quote]')
 
@@ -458,7 +516,9 @@ if __name__ == "__main__":
 
   rate_and_stats(completed_games)
 
-  print_report()
+  print_report(player_ratings, players_total_game_count, players_total_win_count, players_button_counts, 'player', 'button')
+  print('\n')
+  print_report(button_ratings, buttons_total_game_count, buttons_total_win_count, buttons_player_counts, 'button', 'player')
 
   active_games = collect_qualifying_games(_strategies[_strategy],
                                           "ACTIVE",
