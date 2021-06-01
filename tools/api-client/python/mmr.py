@@ -15,7 +15,7 @@ site = "www"
 print_details = False
 highlight_general = True
 highlight_player = None
-highlight_fmt = 'csv'
+highlight_fmt = 'forum'
 print_noteworthy = True
 print_medals = True
 print_winrates = "some" # some, all, none
@@ -82,7 +82,7 @@ _strategies = {"all": Strategy(
 _start_date = date(2021, 5, 1)
 # _stop_date = date(2021, 5, 20)
 # _stop_date = date(2021, 5, 20)
-_stop_date = date(2121, 6, 1) - timedelta(days=1)
+_stop_date = date(2021, 6, 1) - timedelta(days=1)
 
 tlopen_sets = ["Geekz", "Polycon", "Demicon the 13th", "Balticon 34",
                "SydCon 10"]
@@ -97,11 +97,9 @@ hitlistmay21_peloton = ["Julia", "Doyle", "Floriano", "Antonio", "Timea",
                         "Mariusz", "Roger", "Orlando"]
 hitlistmay21_diceland = ["Z-Don", "Micro", "Crysis", "Buck", "Cass", "Golo"]
 
-#banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels', 'buttonbot2']
-
-
+banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'BMAIBagels', 'buttonbot2']
 # banned_players = ['Nala', 'BMAI', 'BMBot', 'buttonbot', 'buttonbot2']
-banned_players = []
+# banned_players = []
 
 
 # END CONFIG
@@ -241,8 +239,8 @@ def do_the_ratings(game):
           wprint = f"({wplay}):{wbutt} μ={wprate0.mu:0.2f}{'+' if wpmudiff>=0 else ''}{wpmudiff:0.2f} σ={wprate0.sigma:0.2f}{'+' if wpsigmadiff>=0 else ''}{wpsigmadiff:0.2f} x={wpexpo0:0.2f}{'+' if wpexpodiff>=0 else ''}{wpexpodiff:0.2f}"
           lprint = f"({lplay}):{lbutt} μ={lprate0.mu:0.2f}{'+' if lpmudiff>=0 else ''}{lpmudiff:0.2f} σ={lprate0.sigma:0.2f}{'+' if lpsigmadiff>=0 else ''}{lpsigmadiff:0.2f} x={lpexpo0:0.2f}{'+' if lpexpodiff>=0 else ''}{lpexpodiff:0.2f}"
         else:
-          wprint = f"({wplay}):{wbutt} x={wpexpo0:0.2f}{'+' if wpexpodiff>=0 else ''}{wpexpodiff:0.2f}"
-          lprint = f"({lplay}):{lbutt} x={lpexpo0:0.2f}{'+' if lpexpodiff>=0 else ''}{lpexpodiff:0.2f}"
+          wprint = f"({wplay}):{wbutt} [{wpexpo0:0.2f}{'+' if wpexpodiff>=0 else ''}{wpexpodiff:0.2f}]"
+          lprint = f"({lplay}):{lbutt} [{lpexpo0:0.2f}{'+' if lpexpodiff>=0 else ''}{lpexpodiff:0.2f}]"
         print(f"[game={game['gameId']}] {wprint} vs {lprint}")
       elif highlight_fmt=='csv':
         wprint = f"{wplay},{wbutt},{wprate0.mu:0.2f},{'+' if wpmudiff>=0 else ''}{wpmudiff:0.2f},{wprate0.sigma:0.2f},{'+' if wpsigmadiff>=0 else ''}{wpsigmadiff:0.2f},{wpexpo0:0.2f},{'+' if wpexpodiff>=0 else ''}{wpexpodiff:0.2f}"
