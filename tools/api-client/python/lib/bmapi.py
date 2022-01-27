@@ -188,6 +188,21 @@ class BMClient:
     }
     return self._make_request(args)
 
+  def load_forum_thread(self, thread):
+    args = {
+      'type': 'loadForumThread',
+      'threadId': thread,
+    }
+    return self._make_request(args)
+
+  def edit_forum_post(self, postId, body):
+    args = {
+      'type': 'editForumPost',
+      'postId': postId,
+      'body': body,
+    }
+    return self._make_request(args)
+
   def create_game(self, pbutton, obutton='', player='', opponent='',
     description='', max_wins=3, use_prev_game=False):
     if player is None or player == '':

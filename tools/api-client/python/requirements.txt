@@ -3,5 +3,6 @@ trueskill
 requests
 PyYAML
 fortune
-pychal
+pychallonge
 func-timeout
+mpmath

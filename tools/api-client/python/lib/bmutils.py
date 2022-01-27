@@ -105,6 +105,22 @@ class BMClientParser(bmapi.BMClient):
       raise ValueError("Failed to call loadActiveGames, got: " + retval.message)
     return self._wrap_game_list_data(retval.data)
 
+  def wrap_load_forum_thread(self, thread):
+    retval = self.load_forum_thread(thread)
+    if not retval.status == 'ok':
+      raise ValueError("Failed to call loadForumThread, got: " + retval.message)
+    data = retval.data
+
+    return data
+
+  def wrap_edit_forum_post(self, postId, body):
+    retval = self.edit_forum_post(postId, body)
+    if not retval.status == 'ok':
+      raise ValueError("Failed to call editForumThread, got: " + retval.message)
+    data = retval.data
+
+    return data
+
   def wrap_load_completed_games(self):
     retval = self.load_completed_games()
     if not retval.status == 'ok':

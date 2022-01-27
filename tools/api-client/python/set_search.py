@@ -81,20 +81,31 @@ def condense(data):
 
 if __name__ == "__main__":
   # init some global state
-  #bm = login()
-  #button_data = read_json('win_percentage_stats.json')
-  #button_set_mapping = read_json('button_set.json')
+  bm = login()
 
-  #set_data = translate_buttons_into_sets(button_data, bm)
-  #write_json(button_set_mapping, "button_set.json")
-  #write_json(set_data, "set_data.json")
+  ## to UPDATE local files:
+  # 1) get win_percentage_stats.json from the stats site (TODO automate)
+  # http://stats.dev.buttonweavers.com/ui/stats/win_percentage_stats.json
+  # 2) run the lines below to generate and write button_set.json and set_data.json
+  # button_data = read_json('win_percentage_stats.json')
+  # set_data = translate_buttons_into_sets(button_data, bm)
+  # write_json(button_set_mapping, 'button_set.json')
+  # write_json(set_data, 'set_data.json')
+  ## finished updating local files
 
+  #######
+
+  ## to run from CACHED files just use the lines below
+  button_data = read_json('win_percentage_stats.json')
+  button_set_mapping = read_json('button_set.json')
   set_data = read_json('set_data.json')
+  ##
+
   set_stats = condense(set_data)
 
   for ss in dict(sorted(set_stats.items())):
     if True or set_stats[ss]['ng'] == 0 and set_stats[ss]['c1'] >= 5 and set_stats[ss]['c2'] >= 5:
       x=set_stats[ss]
-      print(f"{x['s1']}({x['c1']}) vs {x['s2']}({x['c2']}) #{x['ng']} ")
+      print(f"{x['s1']}({x['c1']}) vs {x['s2']}({x['c2']}) #{x['ng']}")
 
   print('done')
