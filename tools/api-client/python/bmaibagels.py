@@ -15,11 +15,11 @@ from func_timeout import func_set_timeout, FunctionTimedOut
 # are warrior dice not working well?
 # focus and chance dice were not working but that was fixed
 # the bot used to not consider your already-set-swing dice when it was alowed to adjust its own. fixed
-# focus doesnt work when BMAI is running on linux for some reason.
-# need to no accept games that have some specials skills we cant account for (Japanese Beetle)
+# focus doesn't work when BMAI is running on linux for some reason.
+# need to not accept games that have some specials skills we cant account for (Japanese Beetle)
 
 always_odds = [item.lower() for item in
-               ['Bagels', 'devious', 'AnnoDomini', 'ElihuRoot']]
+               ['Bagels', 'AnnoDomini', 'ElihuRoot']]
 
 
 def parse_args():
@@ -100,6 +100,10 @@ class BMAIBagels(object):
     gameid = game['gameId']
     if gameid in self.bad_games:
       return
+
+    # if gameid not in [80638]:
+    #   return
+
     game = self.game_data.fetch(gameid)
 
     # may have come in recursivly and we need to break away if its not actually our turn
@@ -112,7 +116,23 @@ class BMAIBagels(object):
       self.exec_bmai(bmai_input, game=game, state=game['gameState'])
     except FunctionTimedOut:
       print(f"timed out in {game['gameId']}")
-      self.bad_game(game['gameId'], bmai_input)
+
+      print("trying ply 2")
+      bmai_input = game_data.bmai.dump(game, 2)
+      try:
+        self.exec_bmai(bmai_input, game=game, state=game['gameState'])
+      except FunctionTimedOut:
+        print(f"timed out in {game['gameId']}")
+
+        print("trying ply 1")
+        bmai_input = game_data.bmai.dump(game, 1)
+        try:
+          self.exec_bmai(bmai_input, game=game, state=game['gameState'])
+        except FunctionTimedOut:
+          print(f"timed out in {game['gameId']}")
+
+          ## tried ply 3, 2, and 1. still timout problems
+          self.bad_game(game['gameId'], bmai_input)
 
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
@@ -121,13 +141,19 @@ class BMAIBagels(object):
     # someday use 'calc_other_side' to determine the new odds of winning.
     # this will be don by making the other players move, extracting odds, and calculating the inverse odds
 
-  @func_set_timeout(360000)
+  @func_set_timeout(3600)
   def exec_bmai(self, input, game, state):
     bmai = Popen(['./bmai'], stdin=PIPE, stdout=PIPE, stderr=PIPE,
                  universal_newlines=True)
     bmai.stdin.write(input)
     bmai.stdin.flush()
-    copyright = bmai.stdout.readline() + bmai.stdout.readline()
+
+    title = bmai.stdout.readline()
+    copyright = bmai.stdout.readline()
+    contact = bmai.stdout.readline()
+    version = bmai.stdout.readline()
+    banner = title+copyright+version
+
     acted = False
     printed = False
     winOdds = None
@@ -171,7 +197,7 @@ class BMAIBagels(object):
               turbo_select.append(l)
           isok = self.submit_attack(game, atk_type, source_dice, target_dice,
                                     turbo_select=turbo_select,
-                                    copyright=copyright, winOdds=winOdds,
+                                    banner=banner, winOdds=winOdds,
                                     stats=stats)
           if isok:
             acted = True
@@ -183,6 +209,7 @@ class BMAIBagels(object):
     if printed:
       print('')
     if not acted:
+      print("¯\_(ツ)_/¯ ")
       self.bad_game(game['gameId'], input)
     bmai.stdin.flush()
     bmai.stdin.close()
@@ -248,7 +275,7 @@ class BMAIBagels(object):
     return retval.status == 'ok'
 
   def submit_attack(self, game, type, source, target, turbo_select,
-      copyright=None, winOdds=None, stats=None):
+      banner=None, winOdds=None, stats=None):
     my_idx = game['activePlayerIdx']
     their_idx = 0 if my_idx == 1 else 1
     dieSelects = self._generate_attack_array(game, my_idx, their_idx,
@@ -257,14 +284,17 @@ class BMAIBagels(object):
     turbo_array = dict()
     for turbo in turbo_select:
       parts = turbo.split(" ")
-      turbo_array[parts[1]] = parts[2]
+      # i know this turbo die finder isnt ideal.
+      # will break when there are multiple turbos
+      turbo_idx = max(source.split(" "))
+      turbo_array[turbo_idx] = parts[2]
     retval = self.client.submit_turn(game['gameId'], my_idx, their_idx,
                                      dieSelectStatus=dieSelects,
                                      attackType=type.capitalize(),
                                      timestamp=game['timestamp'],
                                      roundNumber=game['roundNumber'],
                                      turboVals=turbo_array,
-                                     chat=self.determineChat(game, copyright,
+                                     chat=self.determineChat(game, banner,
                                                              winOdds, stats))
     print(retval.message)
     return retval.status == 'ok'
@@ -280,7 +310,7 @@ class BMAIBagels(object):
           i) in defenders else False
     return attack
 
-  def determineChat(self, game, copyright, winOdds=None, stats=None):
+  def determineChat(self, game, banner, winOdds=None, stats=None):
 
     sortedchat = sorted(game['gameChatLog'], key=lambda x: x['timestamp'])
 
@@ -307,7 +337,7 @@ class BMAIBagels(object):
 
     retval = None
     if not ihavetalked:
-      retval = copyright + '\nCOMMANDS: odds, stats'
+      retval = banner + '\nCOMMANDS: odds, stats'
     elif opponentNeedsReply:
       if lasttheirmessage.lower().startswith('bad bot'):
         retval = 'sorry :-('

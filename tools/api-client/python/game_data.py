@@ -62,7 +62,7 @@ class bmai(object):
 
     return r
 
-  def dump(game):
+  def dump(game, ply=3):
     retval = f"game {game['maxWins']}\n"
     if game['gameState'] == "START_TURN":
       retval += "fight\n"
@@ -94,7 +94,7 @@ class bmai(object):
     retval += f"player 1 {len(player1['activeDieArray'])} {player1['roundScore'] if player1['roundScore'] else 0}\n"
     for d in player1['activeDieArray']:
       retval += f"{bmai.recipe(d)}\n"
-    retval += "ply 3\nmax_sims 100\nmin_sims 5\nmaxbranch 400\n"
+    retval += f"ply {ply}\nmax_sims 100\nmin_sims 5\nmaxbranch 400\n"
     retval += "getaction\n"
     retval += "quit\n"
     return retval
