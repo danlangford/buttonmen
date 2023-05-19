@@ -18,45 +18,46 @@ from func_timeout import func_set_timeout, FunctionTimedOut
 # focus doesn't work when BMAI is running on linux for some reason.
 # need to not accept games that have some specials skills we cant account for (Japanese Beetle)
 
-always_odds = [item.lower() for item in
-               ['Bagels', 'AnnoDomini', 'ElihuRoot']]
+always_odds = [item.lower() for item in ["Bagels", "AnnoDomini", "ElihuRoot"]]
 
 
 def parse_args():
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      "-c", "--config",
+      "-c",
+      "--config",
       help="config file containing site parameters",
-      type=str, default=".bmrc"
+      type=str,
+      default=".bmrc",
   )
   parser.add_argument(
-      "-s", "--site",
-      help="buttonmen site to access",
-      type=str, default="bmai"
-  )
+      "-s", "--site", help="buttonmen site to access", type=str, default="bmai")
   parser.add_argument(
-      "-f", "--filter",
+      "-f",
+      "--filter",
       help="filter out games",
-      type=str, default="all", choices=["all", "odd", "even"]
+      type=str,
+      default="all",
+      choices=["all", "odd", "even"],
   )
   parser.add_argument(
-      "-r", "--random",
-      help="randomize game list", default=False, action='store_true',
-      dest='random'
+      "-r",
+      "--random",
+      help="randomize game list",
+      default=False,
+      action="store_true",
+      dest="random",
   )
-  parser.add_argument(
-      "-g", "--gameid",
-      help="run on 1 specific game",
-      type=int
-  )
+  parser.add_argument("-g", "--gameid", help="run on 1 specific game", type=int)
   return parser.parse_args()
 
 
 class BMAIBagels(object):
+
   def __init__(self,
-      client: bmutils.BMClientParser,
-      filter="all",
-      shuffle=False):
+               client: bmutils.BMClientParser,
+               filter="all",
+               shuffle=False):
     self.client = client
     self.monitor = monitor.Monitor(self.client)
     self.game_data = game_data.GameData(self.client)
@@ -68,22 +69,26 @@ class BMAIBagels(object):
     self.utils = SomeUtils()
 
   def start_monitor(self):
-    self.monitor.start(handle_active=self.monitor_handler,
-                       handle_new=self.new_challenge,
-                       await_confirm=False,
-                       shuffle=self.doshuffle,
-                       filter=self.filter)
+    self.monitor.start(
+        handle_active=self.monitor_handler,
+        handle_new=self.new_challenge,
+        await_confirm=False,
+        shuffle=self.doshuffle,
+        filter=self.filter,
+    )
 
   def new_challenge(self, game):
     # TODO: some dice exist where we could "accept" the game and not "use" the dice
     # like AUX dice. they would need to be hidden from BMAI
-    gameid = game['gameId']
+    gameid = game["gameId"]
     if len(self.buttons) == 0:
       self.buttons = self.client.wrap_load_button_names()
-    myskills = self.buttons[game['myButtonName']]['dieTypes'] + \
-               self.buttons[game['myButtonName']]['dieSkills']
-    theirskills = self.buttons[game['opponentButtonName']]['dieTypes'] + \
-                  self.buttons[game['opponentButtonName']]['dieSkills']
+    myskills = (
+        self.buttons[game["myButtonName"]]["dieTypes"] +
+        self.buttons[game["myButtonName"]]["dieSkills"])
+    theirskills = (
+        self.buttons[game["opponentButtonName"]]["dieTypes"] +
+        self.buttons[game["opponentButtonName"]]["dieSkills"])
     supportset = set(myskills + theirskills)
     disallowedset = supportset - bmai_supported_skills
     if len(disallowedset) > 0:
@@ -97,7 +102,7 @@ class BMAIBagels(object):
     return retval.status == "ok"
 
   def monitor_handler(self, game, calc_other_side=False):
-    gameid = game['gameId']
+    gameid = game["gameId"]
     if gameid in self.bad_games:
       return
 
@@ -107,32 +112,32 @@ class BMAIBagels(object):
     game = self.game_data.fetch(gameid)
 
     # may have come in recursivly and we need to break away if its not actually our turn
-    if not game['player']['waitingOnAction'] and not calc_other_side:
-      print('not my turn')
+    if not game["player"]["waitingOnAction"] and not calc_other_side:
+      print("not my turn")
       return
 
     bmai_input = game_data.bmai.dump(game)
     try:
-      self.exec_bmai(bmai_input, game=game, state=game['gameState'])
+      self.exec_bmai(bmai_input, game=game, state=game["gameState"])
     except FunctionTimedOut:
       print(f"timed out in {game['gameId']}")
 
       print("trying ply 2")
       bmai_input = game_data.bmai.dump(game, 2)
       try:
-        self.exec_bmai(bmai_input, game=game, state=game['gameState'])
+        self.exec_bmai(bmai_input, game=game, state=game["gameState"])
       except FunctionTimedOut:
         print(f"timed out in {game['gameId']}")
 
         print("trying ply 1")
         bmai_input = game_data.bmai.dump(game, 1)
         try:
-          self.exec_bmai(bmai_input, game=game, state=game['gameState'])
+          self.exec_bmai(bmai_input, game=game, state=game["gameState"])
         except FunctionTimedOut:
           print(f"timed out in {game['gameId']}")
 
           ## tried ply 3, 2, and 1. still timout problems
-          self.bad_game(game['gameId'], bmai_input)
+          self.bad_game(game["gameId"], bmai_input)
 
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
@@ -143,7 +148,10 @@ class BMAIBagels(object):
 
   @func_set_timeout(3600)
   def exec_bmai(self, input, game, state):
-    bmai = Popen(['./bmai'], stdin=PIPE, stdout=PIPE, stderr=PIPE,
+    bmai = Popen(["./bmai"],
+                 stdin=PIPE,
+                 stdout=PIPE,
+                 stderr=PIPE,
                  universal_newlines=True)
     bmai.stdin.write(input)
     bmai.stdin.flush()
@@ -152,7 +160,7 @@ class BMAIBagels(object):
     copyright = bmai.stdout.readline()
     contact = bmai.stdout.readline()
     version = bmai.stdout.readline()
-    banner = title+copyright+version
+    banner = title + copyright + version
 
     acted = False
     printed = False
@@ -161,16 +169,16 @@ class BMAIBagels(object):
     for line in bmai.stdout:
       if " p0 best move " in line and "%" in line:
         winOdds = line.split("%")[0].split()[-1]
-      if line.startswith('stats '):
+      if line.startswith("stats "):
         stats = line
       if "err" in line or "fail" in line:
-        print(line, end='')
+        print(line, end="")
         printed = True
-      if 'action' in line:
-        if state == 'SPECIFY_DICE':
+      if "action" in line:
+        if state == "SPECIFY_DICE":
           # TODO swing/opt better
-          swings = len(game['player']['swingRequestArray'])
-          opts = len(game['player']['optRequestArray'])
+          swings = len(game["player"]["swingRequestArray"])
+          opts = len(game["player"]["optRequestArray"])
           swing_select = []
           opt_select = []
           for s in range(swings + opts):
@@ -181,12 +189,12 @@ class BMAIBagels(object):
               opt_select.append(l)
           acted = self.submit_swings(game, swing_select, opt_select)
           continue
-        elif state == 'CHOOSE_RESERVE_DICE':
+        elif state == "CHOOSE_RESERVE_DICE":
           l = bmai.stdout.readline().strip()
           acted = self.submit_reserve(game, l)
           continue
-        elif state == 'START_TURN':
-          turbos = len(game['player']['turboSizeArray'])
+        elif state == "START_TURN":
+          turbos = len(game["player"]["turboSizeArray"])
           turbo_select = []
           atk_type = bmai.stdout.readline().strip()
           source_dice = bmai.stdout.readline().strip()
@@ -195,22 +203,28 @@ class BMAIBagels(object):
             l = bmai.stdout.readline().strip()
             if len(l) > 0:
               turbo_select.append(l)
-          isok = self.submit_attack(game, atk_type, source_dice, target_dice,
-                                    turbo_select=turbo_select,
-                                    banner=banner, winOdds=winOdds,
-                                    stats=stats)
+          isok = self.submit_attack(
+              game,
+              atk_type,
+              source_dice,
+              target_dice,
+              turbo_select=turbo_select,
+              banner=banner,
+              winOdds=winOdds,
+              stats=stats,
+          )
           if isok:
             acted = True
           continue
-        elif state == 'REACT_TO_INITIATIVE':
+        elif state == "REACT_TO_INITIATIVE":
           action = bmai.stdout.readline().strip()
           acted = self.react_initiative(game, action)
           continue
     if printed:
-      print('')
+      print("")
     if not acted:
       print("¯\_(ツ)_/¯ ")
-      self.bad_game(game['gameId'], input)
+      self.bad_game(game["gameId"], input)
     bmai.stdin.flush()
     bmai.stdin.close()
     bmai.stdout.flush()
@@ -228,13 +242,15 @@ class BMAIBagels(object):
       parts = opt.split(" ")
       opt_array[parts[1]] = parts[2]
 
-    retval = self.client.submit_die_values(game['gameId'],
-                                           swingArray=swing_array,
-                                           optionArray=opt_array,
-                                           roundNumber=game['roundNumber'],
-                                           timestamp=game['timestamp'])
+    retval = self.client.submit_die_values(
+        game["gameId"],
+        swingArray=swing_array,
+        optionArray=opt_array,
+        roundNumber=game["roundNumber"],
+        timestamp=game["timestamp"],
+    )
     print(retval.message)
-    return retval.status == 'ok'
+    return retval.status == "ok"
 
   def react_initiative(self, game, action):
     idx = []
@@ -247,9 +263,14 @@ class BMAIBagels(object):
       idx.append(parts[1])
       if len(parts) > 2:
         val.append(parts[2])
-    retval = self.client.react_to_initiative(game['gameId'], action, idx, val,
-                                             roundNumber=game['roundNumber'],
-                                             timestamp=game['timestamp'])
+    retval = self.client.react_to_initiative(
+        game["gameId"],
+        action,
+        idx,
+        val,
+        roundNumber=game["roundNumber"],
+        timestamp=game["timestamp"],
+    )
     print(retval.message)
     if "did not turn your focus dice down far enough" in retval.message:
       # BMAI sometimes does this sometimes and will get stuck
@@ -257,26 +278,39 @@ class BMAIBagels(object):
       # and if i did i dont have a way of telling BMAI to produce something
       # different with the same inputs
       # for now, decline
-      retval = self.client.react_to_initiative(game['gameId'], "decline", [],
-                                               [],
-                                               roundNumber=game['roundNumber'],
-                                               timestamp=game['timestamp'])
+      retval = self.client.react_to_initiative(
+          game["gameId"],
+          "decline",
+          [],
+          [],
+          roundNumber=game["roundNumber"],
+          timestamp=game["timestamp"],
+      )
       print(retval.message)
-    return retval.status == 'ok'
+    return retval.status == "ok"
 
   def submit_reserve(self, game, reserve_cmd):
     dieIdx = reserve_cmd.split()[1]
-    if dieIdx == '-1':
-      retval = self.client.choose_reserve_dice(game['gameId'], 'decline')
+    if dieIdx == "-1":
+      retval = self.client.choose_reserve_dice(game["gameId"], "decline")
     else:
-      retval = self.client.choose_reserve_dice(game['gameId'], 'add', dieIdx)
+      retval = self.client.choose_reserve_dice(game["gameId"], "add", dieIdx)
 
     print(retval.message)
-    return retval.status == 'ok'
+    return retval.status == "ok"
 
-  def submit_attack(self, game, type, source, target, turbo_select,
-      banner=None, winOdds=None, stats=None):
-    my_idx = game['activePlayerIdx']
+  def submit_attack(
+      self,
+      game,
+      type,
+      source,
+      target,
+      turbo_select,
+      banner=None,
+      winOdds=None,
+      stats=None,
+  ):
+    my_idx = game["activePlayerIdx"]
     their_idx = 0 if my_idx == 1 else 1
     dieSelects = self._generate_attack_array(game, my_idx, their_idx,
                                              source.split(" "),
@@ -288,47 +322,50 @@ class BMAIBagels(object):
       # will break when there are multiple turbos
       turbo_idx = max(source.split(" "))
       turbo_array[turbo_idx] = parts[2]
-    retval = self.client.submit_turn(game['gameId'], my_idx, their_idx,
-                                     dieSelectStatus=dieSelects,
-                                     attackType=type.capitalize(),
-                                     timestamp=game['timestamp'],
-                                     roundNumber=game['roundNumber'],
-                                     turboVals=turbo_array,
-                                     chat=self.determineChat(game, banner,
-                                                             winOdds, stats))
+    retval = self.client.submit_turn(
+        game["gameId"],
+        my_idx,
+        their_idx,
+        dieSelectStatus=dieSelects,
+        attackType=type.capitalize(),
+        timestamp=game["timestamp"],
+        roundNumber=game["roundNumber"],
+        turboVals=turbo_array,
+        chat=self.determineChat(game, banner, winOdds, stats),
+    )
     print(retval.message)
-    return retval.status == 'ok'
+    return retval.status == "ok"
 
   def _generate_attack_array(self, game, my_idx, their_idx, attackers,
-      defenders):
+                             defenders):
     attack = {}
-    for i in range(len(game['playerDataArray'][my_idx]['activeDieArray'])):
-      attack[f'playerIdx_{my_idx:d}_dieIdx_{i:d}'] = True if str(
-          i) in attackers else False
-    for i in range(len(game['playerDataArray'][their_idx]['activeDieArray'])):
-      attack[f'playerIdx_{their_idx:d}_dieIdx_{i:d}'] = True if str(
-          i) in defenders else False
+    for i in range(len(game["playerDataArray"][my_idx]["activeDieArray"])):
+      attack[f"playerIdx_{my_idx:d}_dieIdx_{i:d}"] = (True if str(i)
+                                                      in attackers else False)
+    for i in range(len(game["playerDataArray"][their_idx]["activeDieArray"])):
+      attack[f"playerIdx_{their_idx:d}_dieIdx_{i:d}"] = (
+          True if str(i) in defenders else False)
     return attack
 
   def determineChat(self, game, banner, winOdds=None, stats=None):
 
-    sortedchat = sorted(game['gameChatLog'], key=lambda x: x['timestamp'])
+    sortedchat = sorted(game["gameChatLog"], key=lambda x: x["timestamp"])
 
     ihavetalked = False
     opponentNeedsReply = False
 
     lasttheirchattime = 0
-    lasttheirmessage = ''
+    lasttheirmessage = ""
     lastmychattime = 0
-    lastmymessage = ''
+    lastmymessage = ""
 
     for c in sortedchat:
-      if c['player'] == self.client.username:
-        lastmychattime = max(lastmychattime, c['timestamp'])
-        lastmymessage = c['message']
+      if c["player"] == self.client.username:
+        lastmychattime = max(lastmychattime, c["timestamp"])
+        lastmymessage = c["message"]
       else:
-        lasttheirchattime = max(lasttheirchattime, c['timestamp'])
-        lasttheirmessage = c['message']
+        lasttheirchattime = max(lasttheirchattime, c["timestamp"])
+        lasttheirmessage = c["message"]
 
     if lastmychattime > 0:
       ihavetalked = True
@@ -337,28 +374,29 @@ class BMAIBagels(object):
 
     retval = None
     if not ihavetalked:
-      retval = banner + '\nCOMMANDS: odds, stats'
+      retval = banner + "\nCOMMANDS: odds, stats"
     elif opponentNeedsReply:
-      if lasttheirmessage.lower().startswith('bad bot'):
-        retval = 'sorry :-('
-      elif lasttheirmessage.lower().startswith('good bot'):
-        retval = 'thanks (*^.^*)'
-      elif stats is not None and 'stats' in lasttheirmessage.lower():
+      if lasttheirmessage.lower().startswith("bad bot"):
+        retval = "sorry :-("
+      elif lasttheirmessage.lower().startswith("good bot"):
+        retval = "thanks (*^.^*)"
+      elif stats is not None and "stats" in lasttheirmessage.lower():
         retval = stats
-      elif winOdds is not None and (
-          'win?' in lasttheirmessage.lower() or 'odds' in lasttheirmessage.lower() or
-          game['opponent']['playerName'].lower() in always_odds):
-        retval = f'{winOdds}% chance to win (before the re-roll)'
+      elif winOdds is not None and ("win?" in lasttheirmessage.lower() or
+                                    "odds" in lasttheirmessage.lower() or
+                                    game["opponent"]["playerName"].lower()
+                                    in always_odds):
+        retval = f"{winOdds}% chance to win (before the re-roll)"
       else:
         retval = self.utils.get_random_fortune()
-    elif game['opponent']['playerName'].lower() in always_odds:
-      retval = f'{winOdds}% chance to win'
+    elif game["opponent"]["playerName"].lower() in always_odds:
+      retval = f"{winOdds}% chance to win"
 
     if not retval:
-      return ''
+      return ""
     else:
       print(retval)
-      return f'[code]{retval}[/code]'
+      return f"[code]{retval}[/code]"
 
   def bad_game(self, game_id, game_input):
     self.bad_games.append(game_id)
@@ -367,21 +405,21 @@ class BMAIBagels(object):
     text_file.close()
 
 
-
-
 class SomeUtils:
+
   def get_fortune_file(self):
-    return "./fortunes/" + random.choice(listdir("./fortunes")).replace(".dat","")
+    return "./fortunes/" + random.choice(listdir("./fortunes")).replace(
+        ".dat", "")
 
   def get_random_fortune(self):
     return fortune.get_random_fortune(self.get_fortune_file())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   args = parse_args()
   bmclient = bmutils.BMClientParser(args.config, args.site)
   bmaibagels = BMAIBagels(bmclient, filter=args.filter, shuffle=args.random)
   if args.gameid:
-    bmaibagels.monitor_handler({'gameId': args.gameid})
+    bmaibagels.monitor_handler({"gameId": args.gameid})
   else:
     bmaibagels.start_monitor()

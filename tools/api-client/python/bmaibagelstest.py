@@ -18,5 +18,5 @@ class TestSomeUtils(unittest.TestCase):
     self.assertIsNotNone(fortune)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()
