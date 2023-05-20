@@ -120,27 +120,27 @@ class BMAIBagels(object):
 
     # may have come in recursivly and we need to break away if its not actually our turn
     if not game["player"]["waitingOnAction"] and not calc_other_side:
-      self.monitor_handler(game, calc_other_side=True)
       print("not my turn")
       return
 
+    can_check_other_odds = False
     bmai_input = game_data.bmai.dump(game)
     try:
-      self.exec_bmai(bmai_input, game=game, state=game["gameState"], other_odds = calc_other_side)
+      can_check_other_odds = self.exec_bmai(bmai_input, game=game, state=game["gameState"], other_odds = calc_other_side)
     except FunctionTimedOut:
       print(f"timed out in {game['gameId']}")
 
       print("trying ply 2")
       bmai_input = game_data.bmai.dump(game, 2)
       try:
-        self.exec_bmai(bmai_input, game=game, state=game["gameState"], other_odds = calc_other_side)
+        can_check_other_odds = self.exec_bmai(bmai_input, game=game, state=game["gameState"], other_odds = calc_other_side)
       except FunctionTimedOut:
         print(f"timed out in {game['gameId']}")
 
         print("trying ply 1")
         bmai_input = game_data.bmai.dump(game, 1)
         try:
-          self.exec_bmai(bmai_input, game=game, state=game["gameState"], other_odds = calc_other_side)
+          can_check_other_odds = self.exec_bmai(bmai_input, game=game, state=game["gameState"], other_odds = calc_other_side)
         except FunctionTimedOut:
           print(f"timed out in {game['gameId']}")
 
@@ -155,9 +155,8 @@ class BMAIBagels(object):
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
     # or the other player was forced to pass
-    self.monitor_handler(game, calc_other_side=False)
-    # someday use 'calc_other_side' to determine the new odds of winning.
-    # this will be don by making the other players move, extracting odds, and calculating the inverse odds
+    # also try to calculate the new odds after a re-roll
+    self.monitor_handler(game, calc_other_side=can_check_other_odds)
 
   @func_set_timeout(3600)
   def exec_bmai(self, input, game, state, other_odds=False):
@@ -175,11 +174,9 @@ class BMAIBagels(object):
     _version = bmai.stdout.readline()
     banner = _title + _copyright + _version
 
-    if other_odds:
-      print(123)
-
     acted = False
     printed = False
+    can_check_other_odds = False
     win_odds = None
     stats = None
     for line in bmai.stdout:
@@ -219,7 +216,7 @@ class BMAIBagels(object):
             l = bmai.stdout.readline().strip()
             if len(l) > 0:
               turbo_select.append(l)
-          isok = self.submit_attack(
+          (isok, can_check_other_odds) = self.submit_attack(
               game,
               atk_type,
               source_dice,
@@ -254,6 +251,7 @@ class BMAIBagels(object):
     bmai.stdout.close()
     bmai.stderr.flush()
     bmai.stderr.close()
+    return can_check_other_odds
 
   def submit_swings(self, game, swing_select, opt_select):
     swing_array = dict()
@@ -345,6 +343,9 @@ class BMAIBagels(object):
       # will break when there are multiple turbos
       turbo_idx = max(source.split(" "))
       turbo_array[turbo_idx] = parts[2]
+
+    (chat, can_check_other_odds)=self.determine_chat(game, banner, win_odds, stats)
+
     retval = self.client.client.submit_turn(
         game["gameId"],
         my_idx,
@@ -354,10 +355,10 @@ class BMAIBagels(object):
         timestamp=game["timestamp"],
         roundNumber=game["roundNumber"],
         turboVals=turbo_array,
-        chat=self.determine_chat(game, banner, win_odds, stats),
+        chat=chat,
     )
     print(retval.message)
-    return retval.status == "ok"
+    return (retval.status == "ok", can_check_other_odds)
 
   def _generate_attack_array(self, game, my_idx, their_idx, attackers,
                              defenders):
@@ -397,7 +398,7 @@ class BMAIBagels(object):
 
     retval = None
     if other_odds and "chance to win" in lastmymessage:
-      retval = f"{win_odds}% chance to win (after the re-roll)"
+      retval = f"{win_odds}% chance to win (after re-roll)"
     elif not ihavetalked:
       retval = banner + "\nCOMMANDS: odds, stats"
     elif opponent_needs_reply:
@@ -411,17 +412,17 @@ class BMAIBagels(object):
                                     "odds" in lasttheirmessage.lower() or
                                      game["opponent"]["playerName"].lower()
                                      in always_odds):
-        retval = f"{win_odds}% chance to win (before the re-roll)"
+        retval = f"{win_odds}% chance to win (before re-roll)"
       else:
         retval = self.utils.get_random_fortune()
     elif game["opponent"]["playerName"].lower() in always_odds:
-      retval = f"{win_odds}% chance to win"
+      retval = f"{win_odds}% chance to win (before re-roll)"
 
     if not retval:
       return ""
     else:
       print(retval)
-      return f"[code]{retval}[/code]"
+      return (f"[code]{retval}[/code]", ("chance to win" in retval and not other_odds))
 
   def bad_game(self, game_id, game_input):
     self.bad_games.append(game_id)
