@@ -1,29 +1,32 @@
-# BMAPI
+##### bmapi.py
 # This library strictly implements the Button Men API in python.
 # The BMClient class provides one function for each API method,
 # which is called with the arguments to be passed to that method,
 # and returns the JSON response to the method invocation.
 
-# IMPORTS
+### Imports
 
 # Import stuff from the future.
-from __future__ import absolute_import, division, print_function, \
-  unicode_literals
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+
+# Import regular stuff.
 
 import configparser
 import json
 import os
-from http.cookiejar import LWPCookieJar
+from http.cookiejar import CookieJar, LWPCookieJar
 
 import requests
 
+### Classes
 
-# CLASSES
-
-class BMAPIResponse:
+class BMAPIResponse():
   def __init__(self, response_dict):
     for mandatory_arg in ['data', 'message', 'status']:
-      if mandatory_arg not in response_dict:
+      if not mandatory_arg in response_dict:
         raise ValueError("Malformed API response is missing key '%s': %s" % (
           mandatory_arg, response_dict))
     self.data = response_dict['data']
@@ -38,26 +41,34 @@ class BMAPIResponse:
     if 'BM_SKILL_RAND_VALS_ROLLED' in response_dict:
       self.skill_rand_vals = response_dict['BM_SKILL_RAND_VALS_ROLLED']
 
-
-class BMClient:
+class BMClient():
   def _read_rcfile(self, rcfile, site):
     config = configparser.ConfigParser()
     config.read(rcfile)
     self.url = config.get(site, "url")
     self.username = config.get(site, "username")
     self.password = config.get(site, "password")
-    self.cookiefile = os.path.expanduser(config.get(site, "cookiefile"))
+    try:
+      self.cookiefile = os.path.expanduser(config.get(site, "cookiefile"))
+    except configparser.NoOptionError:
+      self.cookiefile = None
     try:
       self.cachedir = os.path.expanduser(config.get(site, "cachedir"))
     except configparser.NoOptionError:
       pass
 
   def _setup_cookies(self):
-    # all requests should use the same cookie jar
-    self.cookiejar = LWPCookieJar(self.cookiefile)
-    if os.path.isfile(self.cookiefile):
-      self.cookiejar.load(ignore_discard=True)
+    # create a session so all requests can use a shared cookie jar
     self.session = requests.session()
+
+    if self.cookiefile is not None:
+      self.cookiejar = LWPCookieJar(self.cookiefile)
+      if os.path.isfile(self.cookiefile):
+        # load existing cookies from file
+        self.cookiejar.load(ignore_discard=True)
+    else:
+      # use in-memory cookie jar
+      self.cookiejar = CookieJar()
     self.session.cookies = self.cookiejar
 
   def __init__(self, rcfile, site):
@@ -73,9 +84,7 @@ class BMClient:
     headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
     }
-    response = self.session.post(url=self.url, data=json.dumps(args),
-                                 headers=headers, )
-
+    response = self.session.post(url=self.url, data=data, headers=headers)
     try:
       retval = response.json()
       return BMAPIResponse(retval)
@@ -91,7 +100,8 @@ class BMClient:
     }
     retval = self._make_request(args)
     if retval.status == 'ok':
-      self.cookiejar.save(ignore_discard=True)
+      if isinstance(self.cookiejar, LWPCookieJar):
+        self.cookiejar.save(ignore_discard=True)
       return True
     return False
 
@@ -128,6 +138,14 @@ class BMClient:
   def load_new_games(self):
     args = {
       'type': 'loadNewGames',
+    }
+    return self._make_request(args)
+
+  def react_to_new_game(self, gameId, action):
+    args = {
+      'type': 'reactToNewGame',
+      'gameId': gameId,
+      'action':  action
     }
     return self._make_request(args)
 
@@ -203,15 +221,14 @@ class BMClient:
     }
     return self._make_request(args)
 
-  def create_game(self, pbutton, obutton='', player='', opponent='',
-    description='', max_wins=3, use_prev_game=False):
+  def create_game(self, pbutton, obutton='', player='', opponent='', description='', max_wins=3, use_prev_game=False, custom_recipe_array=None):
     if player is None or player == '':
       player = self.username
     if not obutton:
       obutton = ''
     player_info_array = [
-      [player, pbutton, ],
-      [opponent, obutton, ],
+      [ player, pbutton, ],
+      [ opponent, obutton, ],
     ]
     args = {
       'type': 'createGame',
@@ -222,10 +239,11 @@ class BMClient:
       args['previousGameId'] = use_prev_game
     if description:
       args['description'] = description
+    if custom_recipe_array:
+      args['customRecipeArray'] = custom_recipe_array
     return self._make_request(args)
 
-  def submit_turn(self, gameId, attackerIdx, defenderIdx, dieSelectStatus,
-    attackType, roundNumber, timestamp, turboVals, chat=''):
+  def submit_turn(self, gameId, attackerIdx, defenderIdx, dieSelectStatus, attackType, roundNumber, timestamp, turboVals, chat=''):
     args = {
       'type': 'submitTurn',
       'game': gameId,
@@ -241,8 +259,7 @@ class BMClient:
       args['turboVals'] = turboVals
     return self._make_request(args)
 
-  def submit_die_values(self, gameId, swingArray, optionArray, roundNumber,
-    timestamp):
+  def submit_die_values(self, gameId, swingArray, optionArray, roundNumber, timestamp):
     args = {
       'type': 'submitDieValues',
       'game': gameId,
@@ -265,8 +282,7 @@ class BMClient:
     }
     return self._make_request(args)
 
-  def react_to_initiative(self, gameId, action, idxArray, valueArray,
-    roundNumber, timestamp):
+  def react_to_initiative(self, gameId, action, idxArray, valueArray, roundNumber, timestamp):
     args = {
       'type': 'reactToInitiative',
       'game': gameId,
@@ -278,8 +294,7 @@ class BMClient:
     }
     return self._make_request(args)
 
-  def adjust_fire_dice(self, gameId, action, idxArray, valueArray,
-    roundNumber, timestamp):
+  def adjust_fire_dice(self, gameId, action, idxArray, valueArray, roundNumber, timestamp):
     args = {
       'type': 'adjustFire',
       'game': gameId,

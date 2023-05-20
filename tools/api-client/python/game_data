@@ -1,0 +1,159 @@
+#!/usr/bin/env python
+
+##### game-data
+#
+# Print out data about a game.
+
+### Imports
+
+# Import regular stuff.
+
+import configparser
+import argparse
+import json
+import os
+import sys
+
+# Import yaml if we can, and set a variable to track whether we did or not.
+
+try:
+  import yaml
+  yaml_available = True
+except ImportError:
+  yaml_available = False
+
+# Import Button Men utilities.
+
+sys.path.append('lib')
+import bmutils
+
+### Classes
+
+# bmai formatter
+class bmai(object):
+  def recipe(d):
+    r = d['recipe']
+
+    # remove () around die, except for option
+    if ',' not in r:
+      r = r.replace('(', '').replace(')', '')
+
+    # if sides selected for swing or option, include them
+    if ('/' in r or 'Swing' in d['description']) and d['sides']:
+      r += '-' + str(d['sides'])
+
+    # include value as needed
+    if d['value']:
+      r += f":{d['value']}"
+      if 'Dizzy' in d['properties']:
+        r += 'd'
+
+    return r
+
+  def dump(game, ply=3):
+    retval = f"game {game['maxWins']}\n"
+    if game['gameState'] == "START_TURN":
+      retval += "fight\n"
+    elif game['gameState'] == "SPECIFY_DICE":
+      retval += "preround\n"
+    elif game['gameState'] == 'CHOOSE_RESERVE_DICE':
+      retval += "reserve\n"
+    # elif game['gameState'] == 'CHOOSE_AUXILIARY_DICE':
+    #   retval += "auxpox?\n"
+    elif game['gameState'] == 'REACT_TO_INITIATIVE':
+      nestedskilllists = [d['skills'] for d in game['player']['activeDieArray']]
+      skills = set(
+        [skill for skilllist in nestedskilllists for skill in skilllist])
+      if 'Focus' in skills:
+        retval += "focus\n"
+      elif 'Chance' in skills:
+        retval += "chance\n"
+      else:
+        retval += "____I_DONT_KNOW_REACT_INITIATIVE_"
+    else:
+      retval += f"unhandled_{game['gameState']}\n"
+    if game['player']['waitingOnAction']:
+      player0, player1 = game['player'], game['opponent']
+    else:
+      player0, player1 = (game['opponent'], game['player'])
+    retval += f"player 0 {len(player0['activeDieArray'])} {player0['roundScore'] if player0['roundScore'] else 0}\n"
+    for d in player0['activeDieArray']:
+      retval += f"{bmai.recipe(d)}\n"
+    retval += f"player 1 {len(player1['activeDieArray'])} {player1['roundScore'] if player1['roundScore'] else 0}\n"
+    for d in player1['activeDieArray']:
+      retval += f"{bmai.recipe(d)}\n"
+    retval += f"ply {ply}\nmax_sims 100\nmin_sims 5\nmaxbranch 400\n"
+    retval += "getaction\n"
+    retval += "quit\n"
+    return retval
+
+
+# A class to not use anchors and aliases when dumping YAML.
+
+if yaml_available:
+  class noalias_dumper(yaml.SafeDumper):
+    def ignore_aliases(self, _data):
+      return True
+
+### Functions
+
+## parse_arguments
+
+def parse_arguments():
+
+  parser = argparse.ArgumentParser(description="Print out data about a game.")
+
+  parser.add_argument('gamenumber', help="game number")
+
+  if yaml_available:
+    parser.add_argument('--format',
+                        choices = ['json', 'yaml', 'bmai'], default = 'yaml',
+                        help = "output data format (default: yaml)")
+  else:
+    parser.add_argument('--format',
+                        choices = ['json', 'bmai'], default = 'json',
+                        help = "output data format (default: json)")
+
+  # Add general optional arguments.
+
+  parser.add_argument('--site',
+                      default = 'www',
+                      help = "site to check ('www' by default)")
+
+  parser.add_argument('--config', '-c',
+                      default='~/.bmrc',
+                      help="config file containing site parameters")
+
+  # Return the parser.
+
+  return parser.parse_args()
+
+### Main body
+
+args = parse_arguments()
+
+# Connect to the site.
+
+try:
+  bmconn = bmutils.BMClientParser(os.path.expanduser(args.config), args.site)
+except configparser.NoSectionError as e:
+  print("ERROR: {0} doesn't seem to have a '{1}' section".format(args.config, args.site))
+  print("(Exception: {0}: {1})".format(e.__module__, e.message))
+  sys.exit(1)
+
+if not bmconn.verify_login():
+  print("ERROR: Could not log in to {0}".format(args.site))
+  sys.exit(1)
+
+# Fetch the game data.
+
+game = bmconn.wrap_load_game_data(args.gamenumber)
+
+# Print the game data.
+
+if args.format == 'json':
+  print(json.dumps(game, indent=1, sort_keys=True))
+elif args.format == 'bmai':
+  print(bmai.dump(game))
+else:
+  print(yaml.dump(game, Dumper=noalias_dumper))

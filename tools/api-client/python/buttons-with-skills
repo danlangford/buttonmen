@@ -1,39 +1,44 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-# BUTTONS-WITH-SKILLS
+##### buttons-with-skills
 #
 # Show a list of buttons who have a set of skills.
 
-# IMPORTS
+### Imports
 
 # Import stuff from the future.
 
 from __future__ import division
 
-import argparse
+# Import regular stuff.
+
 import configparser
+import argparse
 import os
 import sys
 
-from lib import bmutils
+# Import Button Men utilities.
 
+sys.path.append('lib')
+import bmutils
 
-# FUNCTIONS
+### Functions
 
-# PARSE ARGUMENTS
+## parse_arguments
 
 def parse_arguments():
-  parser = argparse.ArgumentParser(
-    description="Show a list of buttons who have a set of skills.")
+
+  parser = argparse.ArgumentParser(description="Show a list of buttons who have a set of skills.")
+
 
   parser.add_argument('skills',
-                      nargs='*',
-                      help="skill(s) to match")
+                      nargs = '*',
+                      help = "skill(s) to match")
 
   parser.add_argument('--match',
-                      choices=['any', 'all'],
-                      default='all',
-                      help="match buttons with all the skills, or any of them ('all' by default)")
+                      choices = ['any', 'all'],
+                      default = 'all',
+                      help = "match buttons with all the skills, or any of them ('all' by default)")
 
   # FIXME: It'd be nice if we could also differentiate between a button
   # with more than one skill on any dice, and a button with more than one
@@ -42,14 +47,14 @@ def parse_arguments():
   # moment (2017-07-03) without parsing the button recipe strings.
 
   parser.add_argument('--name-only',
-                      action='store_true',
-                      help="print only button names, not recipes")
+                      action = 'store_true',
+                      help = "print only button names, not recipes")
 
   # Add general optional arguments.
 
   parser.add_argument('--site',
-                      default='www',
-                      help="site to check ('www' by default)")
+                      default = 'www',
+                      help = "site to check ('www' by default)")
 
   parser.add_argument('--config', '-c',
                       default='~/.bmrc',
@@ -59,8 +64,7 @@ def parse_arguments():
 
   return parser.parse_args()
 
-
-# MAIN BODY
+### Main body
 
 args = parse_arguments()
 
@@ -69,8 +73,7 @@ args = parse_arguments()
 try:
   bmconn = bmutils.BMClientParser(os.path.expanduser(args.config), args.site)
 except configparser.NoSectionError as e:
-  print("ERROR: {0} doesn't seem to have a '{1}' section".format(args.config,
-                                                                 args.site))
+  print("ERROR: {0} doesn't seem to have a '{1}' section".format(args.config, args.site))
   print("(Exception: {0}: {1})".format(e.__module__, e.message))
   sys.exit(1)
 
@@ -81,7 +84,8 @@ if not bmconn.verify_login():
 # Create a map of letters and lowercased skill names to canonical skill names.
 
 skillmap = bmutils.SkillName
-for skill in skillmap.values():
+skillnames = [skillname for skillname in skillmap.values()]
+for skill in skillnames:
   skillmap[skill.lower()] = skill
 
 # Create a list of skills, with their names canonicalized.
@@ -95,7 +99,7 @@ for skill in [x.lower() for x in args.skills]:
 
 # If we didn't find any skills, bail now.
 
-if not skills:
+if skills == []:
   print("ERROR: No known skills specified, exiting")
   sys.exit(1)
 
@@ -133,6 +137,6 @@ for (name, info) in buttondict.items():
 
 for button in sorted(buttons):
   if args.name_only:
-    print(button)
+    print (button)
   else:
-    print("{}: {}".format(button, buttondict[button]['recipe']))
+    print ("{}: {}".format(button, buttondict[button]['recipe']))

@@ -1,17 +1,16 @@
-# BMUTILS
+##### bmutils.py
 # This module provides a wrapper to the bmapi client which may (or
 # may not) report the API data in a more user-friendly form.
 
 # Import stuff from the future.
 
-from __future__ import absolute_import, division, print_function, \
-  unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from base64 import urlsafe_b64encode
-import json
+# Import regular stuff.
+
+import bmapi
 import os
-
-from . import bmapi
+import json
 
 SkillName = {
   '+': 'Auxiliary',
@@ -50,16 +49,26 @@ SkillName = {
   '`': 'Warrior',
 }
 
+class BMClientParser:
+  def __init__(self, rcfile, site, client=None):
+    if client:
+      self.client = client
+    else:
+      self.client = bmapi.BMClient(rcfile, site)
+    self.username = self.client.username
+    self.cachedir = self.client.cachedir
 
-class BMClientParser(bmapi.BMClient):
+  ## Wrappers which invoke a function in the client, for backwards compatibility
 
-  # Simple wrappers which just call a function and reflow the result
+  def verify_login(self):
+    return self.client.verify_login()
+
+  ## Simple wrappers which just call a function and reflow the result
 
   def wrap_load_button_names(self):
-    retval = self.load_button_names()
+    retval = self.client.load_button_names()
     if not retval.status == 'ok':
-      raise ValueError(
-        "Failed to get button data, got: %s" % retval.message)
+      raise ValueError("Failed to get button data, got: %s" % retval.message)
     data = retval.data
     buttons = {}
     for i in range(len(data)):
@@ -67,7 +76,7 @@ class BMClientParser(bmapi.BMClient):
     return buttons
 
   def wrap_load_player_names(self):
-    retval = self.load_player_names()
+    retval = self.client.load_player_names()
     if not retval.status == 'ok':
       raise ValueError("Failed to get player data, got: " + retval.message)
     data = retval.data
@@ -83,27 +92,33 @@ class BMClientParser(bmapi.BMClient):
     for i in range(len(data['gameIdArray'])):
       gamedata = {}
       for item in [
-        'gameState', 'opponentName', 'myButtonName', 'status',
-        'opponentButtonName', 'inactivity']:
+	'gameState', 'opponentName', 'myButtonName', 'status',
+	'opponentButtonName', 'inactivity']:
         gamedata[item] = data[item + 'Array'][i]
       for item in [
-        'gameId', 'nWins', 'nLosses', 'nTargetWins', 'opponentId',
-        'isAwaitingAction', 'nDraws']:
+	'gameId', 'nWins', 'nLosses', 'nTargetWins', 'opponentId',
+	'isAwaitingAction', 'nDraws']:
         gamedata[item] = int(data[item + 'Array'][i])
       games.append(gamedata)
     return games
 
   def wrap_load_active_games(self):
-    retval = self.load_active_games()
+    retval = self.client.load_active_games()
     if not retval.status == 'ok':
       raise ValueError("Failed to call loadActiveGames, got: " + retval.message)
     return self._wrap_game_list_data(retval.data)
 
   def wrap_load_new_games(self):
-    retval = self.load_new_games()
+    retval = self.client.load_new_games()
     if not retval.status == 'ok':
-      raise ValueError("Failed to call loadActiveGames, got: " + retval.message)
+      raise ValueError("Failed to call loadNewGames, got: " + retval.message)
     return self._wrap_game_list_data(retval.data)
+
+  def wrap_react_to_new_game(self, game, accept):
+    retval = self.client.react_to_new_game(game, 'accept' if accept else 'reject')
+    if not retval.status == 'ok':
+      raise ValueError("Failed to call reactToNewGame, got: " + retval.message)
+    return retval.data
 
   def wrap_load_forum_thread(self, thread):
     retval = self.load_forum_thread(thread)
@@ -122,10 +137,9 @@ class BMClientParser(bmapi.BMClient):
     return data
 
   def wrap_load_completed_games(self):
-    retval = self.load_completed_games()
+    retval = self.client.load_completed_games()
     if not retval.status == 'ok':
-      raise ValueError(
-        "Failed to call loadCompletedGames, got: " + retval.message)
+      raise ValueError("Failed to call loadCompletedGames, got: " + retval.message)
     return self._wrap_game_list_data(retval.data)
 
   def wrap_search_game_history(self, sortColumn, searchDirection="DESC",
@@ -149,10 +163,8 @@ class BMClientParser(bmapi.BMClient):
         "Failed to call searchGameHistory, got: " + retval.message)
     return retval.data
 
-  def wrap_create_game(self, pbutton, obutton='', player='', opponent='',
-    description=''):
-    retval = self.create_game(pbutton, obutton, player, opponent,
-                              description)
+  def wrap_create_game(self, pbutton, obutton='', player='', opponent='', description=''):
+    retval = self.client.create_game(pbutton, obutton, player, opponent, description)
     if not retval.status == 'ok':
       raise ValueError("Failed to call createGame, got: " + retval.message)
     return retval.data
@@ -173,11 +185,10 @@ class BMClientParser(bmapi.BMClient):
       # otherwise (the cache didn't already have a file for this game)
       else:
         # load the game
-        retval = self.load_game_data(game)
+        retval = self.client.load_game_data(game)
         # if that didn't work, raise an exception
         if not retval.status == 'ok':
-          raise ValueError(
-            "Failed to call loadGameData, got: " + retval.message)
+          raise ValueError("Failed to call loadGameData, got: " + retval.message)
         # if we're still here, we have the game data
         data = retval.data
         # if the game is completed
@@ -187,7 +198,7 @@ class BMClientParser(bmapi.BMClient):
             json.dump(data, cache_fh, indent=1, sort_keys=True)
     # otherwise (we aren't using a cache directory), load the game
     else:
-      retval = self.load_game_data(game)
+      retval = self.client.load_game_data(game)
       if not retval.status == 'ok':
         raise ValueError("Failed to call loadGameData, got: " + retval.message)
       data = retval.data
