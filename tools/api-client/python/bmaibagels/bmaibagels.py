@@ -235,15 +235,16 @@ class BMAIBagels(object):
           continue
     if printed:
       print("")
-    if not acted and other_odds:
+    if not acted and other_odds and win_odds is not None:
       new_odds = "%0.1f" % (100-float(win_odds))
       print(f"other_odds={other_odds} win_odds={win_odds} new_odds={new_odds}")
-      # self.submit_chat_edit() this will need to call determine_chat
-      # i think we need to eventually call submitChat
-      # MIME Type: application/x-www-form-urlencoded; charset=UTF-8
-      # {"type":"submitChat","game":"91841","chat":"testing chat edit"}
+      (chat,x)=self.determine_chat(game, None, win_odds=new_odds, other_odds=True)
+      # retval = self.client.wrap_submit_chat(game["gameId"], chat)
+      ## somehow need to submit `edit` timestamp when editing a chat
+      ### {"type":"submitChat","game":"91846","chat":"chat while attack -- edit","edit":1684560609}
+      # print(str(retval))
     if not acted and not other_odds:
-      print("¯\_(ツ)_/¯ ")
+      print("¯\_(ツ)_/¯")
       self.bad_game(game["gameId"], input)
     bmai.stdin.flush()
     bmai.stdin.close()
@@ -419,7 +420,7 @@ class BMAIBagels(object):
       retval = f"{win_odds}% chance to win (before re-roll)"
 
     if not retval:
-      return ""
+      return ("", False)
     else:
       print(retval)
       return (f"[code]{retval}[/code]", ("chance to win" in retval and not other_odds))
