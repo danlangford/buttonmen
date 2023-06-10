@@ -9,8 +9,9 @@ import fortune
 from func_timeout import func_set_timeout, FunctionTimedOut
 
 import sys
+import pathlib
 
-sys.path.append("../lib")
+sys.path.append(str(pathlib.Path(__file__).parent.parent.resolve())+"/lib")
 
 import bmutils
 import game_data
