@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import bmapi
 import os
 import json
+from base64 import urlsafe_b64encode
 
 SkillName = {
   '+': 'Auxiliary',

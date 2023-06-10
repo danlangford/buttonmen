@@ -11,26 +11,28 @@ from builtins import input
 from datetime import datetime
 
 import sys
+
 sys.path.append("../lib")
 
 import bmutils
 
+
 def parse_args():
   parser = argparse.ArgumentParser()
   parser.add_argument(
-    "-c", "--config",
-    help="config file containing site parameters",
-    type=str, default=".bmrc"
+      "-c",
+      "--config",
+      help="config file containing site parameters",
+      type=str,
+      default=".bmrc",
   )
   parser.add_argument(
-    "-s", "--site",
-    help="buttonmen site to access",
-    type=str, default="www"
-  )
+      "-s", "--site", help="buttonmen site to access", type=str, default="www")
   return parser.parse_args()
 
 
 class Monitor(object):
+
   def __init__(self, client):
     self.client = client
     self.sleep_sec = 120
@@ -38,16 +40,23 @@ class Monitor(object):
       print("Could not login")
       sys.exit(1)
 
-  def start(self, handle_new=lambda g: None, handle_active=lambda g: None,
-      await_confirm=True, shuffle=False, filter="all"):
+  def start(
+      self,
+      handle_new=lambda g: None,
+      handle_active=lambda g: None,
+      await_confirm=True,
+      shuffle=False,
+      filter="all",
+  ):
     while True:
 
       newgames = self.client.wrap_load_new_games()
       if shuffle:
         random.shuffle(newgames)
       for ng in newgames:
-        if (filter == "all") or (filter == "odd" and ng['gameId']%2!=0) or (filter == "even" and ng['gameId']%2==0):
-          if ng['isAwaitingAction']:
+        if ((filter == "all") or (filter == "odd" and ng["gameId"] % 2 != 0) or
+            (filter == "even" and ng["gameId"] % 2 == 0)):
+          if ng["isAwaitingAction"]:
             print(f"{ng['gameId']}: "
                   f"{self.client.username} ({ng['myButtonName']})"
                   " vs. "
@@ -59,8 +68,10 @@ class Monitor(object):
         random.shuffle(games)
       games_active = False
       for game in games:
-        if (filter == "all") or (filter == "odd" and game['gameId']%2!=0) or (filter == "even" and game['gameId']%2==0):
-          if game['isAwaitingAction']:
+        if ((filter == "all") or
+            (filter == "odd" and game["gameId"] % 2 != 0) or
+            (filter == "even" and game["gameId"] % 2 == 0)):
+          if game["isAwaitingAction"]:
             print(f"{game['gameId']}: "
                   f"{self.client.username} ({game['myButtonName']})"
                   " vs. "
@@ -72,7 +83,7 @@ class Monitor(object):
         input()
       else:
         print(
-          f'Zzz for {self.sleep_sec} @ {datetime.isoformat(datetime.now())}')
+            f"Zzz for {self.sleep_sec} @ {datetime.isoformat(datetime.now())}")
         time.sleep(self.sleep_sec)
 
 
