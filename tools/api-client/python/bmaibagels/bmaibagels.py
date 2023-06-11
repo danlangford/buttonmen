@@ -478,7 +478,7 @@ class SomeUtils:
 
 if __name__ == "__main__":
   args = parse_args()
-  print(f"bin={args.binary} ply={args.ply} site={args.site}")
+  print(f"args={args}")
   bmclient = bmutils.BMClientParser(args.config, args.site)
   bmaibagels = BMAIBagels(
       bmclient,
