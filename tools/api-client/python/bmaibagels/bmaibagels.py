@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import random
+import traceback
 from os import listdir
 from subprocess import Popen, PIPE
 from bmaipy import BMAI, bmai_supported_skills
@@ -169,8 +170,10 @@ class BMAIBagels(object):
           ## tried ply all the way down to 0. still timout problems
           self.bad_game(game["gameId"], bmai_input)
           break
-      except:
+      except BaseException as e:
         ## some other problem
+        print(f"Exception {getattr(e, 'message', repr(e))}")
+        traceback.print_tb(e.__traceback__)
         self.bad_game(game["gameId"], bmai_input)
         break
 
@@ -186,7 +189,7 @@ class BMAIBagels(object):
 
   @func_set_timeout(60 * 60)  #
   def exec_bmai(self, input, game, state, other_odds=False):
-    bmai = Popen(["./" + bin],
+    bmai = Popen([self.binary],
                  stdin=PIPE,
                  stdout=PIPE,
                  stderr=PIPE,
