@@ -34,7 +34,7 @@ def parse_args():
       "--binary",
       help="path to BMAI binary",
       type=str,
-      default="./bmai-v3.0-34-g94ed97d",
+      default="./bmai-v3.0-39-g45f2b4c",
   )
   parser.add_argument(
       "-c",
