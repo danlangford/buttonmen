@@ -4,7 +4,6 @@ bmai_supported_skills = {
     # "Insult", # IX
     # "Jolt", # JX
     # "Mad", # X&
-    # "Maximum", # MX
     # "Rush", # #X
     # "Value", # vX
     # "Wildcard", # C
@@ -13,7 +12,8 @@ bmai_supported_skills = {
     "Chance",  # cX
     "Doppleganger",  # DX
     "Focus",  # fX
-    "Konstant",  # xK
+    "Konstant",  # kX
+    "Maximum", # MX
     "Mighty",  # HX
     "Mood",  # X?
     "Morphing",  # mX
@@ -64,7 +64,7 @@ nala_supported_skills = {
     "Doppleganger",  # DX
     "Focus",  # fX
     "Insult",  # IX
-    "Konstant",  # xK
+    "Konstant",  # kX
     "Mad",  # X&
     "Maximum",  # MX
     "Mighty",  # HX
