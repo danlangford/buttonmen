@@ -150,16 +150,27 @@ class BMAIBagels(object):
 
     game = self.game_data.fetch(gameid)
 
-    if game["gameState"] == "END_GAME":
-      print(f"game {gameid} is finished")
+    if game["gameState"] in ["END_GAME", "CANCELLED", "DETERMINE_INITIATIVE"]:
+      print(f"game {gameid} state is {game['gameState']}")
       return
-    if not game["player"]["waitingOnAction"]:
-      if calc_other_side:
-        print("calculating the other side")
-      else:
-        # may have come in recursivly and we need to break away if its not actually our turn
-        print(f"not my turn in game {gameid}")
+
+    if not game["player"]["waitingOnAction"] and not calc_other_side:
+      # may have come in recursivly and we need to break away if its not actually our turn
+      print(f"not my turn in game {gameid}")
+      return
+
+    if calc_other_side:
+
+      if game["gameState"] not in ["START_TURN"]:
+        print(f"game {gameid} is not at {game['gameState']}, dont waste time calculating other side")
         return
+
+      if game["player"]["waitingOnAction"]:
+        print(f"game {gameid} is waiting on action, no time to calculate other side")
+        return
+      else:
+        print(f"calculating the other side")
+
 
     can_check_other_odds = False
 
