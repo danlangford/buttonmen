@@ -238,12 +238,14 @@ class BMClient():
         args['optionValueArray'] = optionArray
     return self._make_request(args)
 
-  def submit_chat(self, game, chat):
+  def submit_chat(self, game, chat, edit_timestamp=None):
     args = {
       'type': 'submitChat',
       'game': game,
       'chat': chat,
     }
+    if edit_timestamp > 0:
+      args['edit'] = edit_timestamp
     return self._make_request(args)
 
   def react_to_new_game(self, gameId, action):

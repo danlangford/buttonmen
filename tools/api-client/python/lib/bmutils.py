@@ -133,8 +133,8 @@ class BMClientParser:
       raise ValueError("Failed to call editForumThread, got: " + retval.message)
     return retval.data
 
-  def wrap_submit_chat(self, game, chat):
-    retval = self.client.submit_chat(game, chat)
+  def wrap_submit_chat(self, game, chat, edit_timestamp=None):
+    retval = self.client.submit_chat(game, chat, edit_timestamp)
     if not retval.status == 'ok':
       raise ValueError("Failed to call submitChat, got: " + retval.message)
     return retval.data
