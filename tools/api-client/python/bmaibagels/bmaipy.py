@@ -1,19 +1,21 @@
 bmai_supported_skills = {
+
+    # "Auxiliary", # +X ## while there is some evidence of Aux in BMAI there are many pieces missing
     # "Boom", # bX
     # "Fire", # FX
-    # "Insult", # IX
     # "Jolt", # JX
     # "Mad", # X&
     # "Rush", # #X
     # "Value", # vX
     # "Wildcard", # C
-    # "Auxiliary", # +X ## while there is some evidence of Aux in BMAI there are many pieces missing
+
     "Berserk",  # BX
     "Chance",  # cX
     "Doppleganger",  # DX
     "Focus",  # fX
+    "Insult",  # IX
     "Konstant",  # kX
-    "Maximum", # MX
+    "Maximum",  # MX
     "Mighty",  # HX
     "Mood",  # X?
     "Morphing",  # mX
@@ -22,7 +24,7 @@ bmai_supported_skills = {
     "Poison",  # pX
     "Queer",  # qX
     "Radioactive",  # %X
-    "Rage",  # GX
+    "Rage",  # GX # this might actually not be working in BMAI
     "Reserve",  # rX
     "Shadow",  # sX
     "Slow",  # wX
@@ -46,6 +48,7 @@ bmai_supported_skills = {
     "Z Swing",  # Z
     "Twin",  # (X,X)
     "Option",  # X/X
+
     "Q Swing",  # Q ##not on buttonweavers
     "Unique",  # uX ##not on buttonweavers
 }
@@ -57,6 +60,10 @@ nala_supported_skills = {
     # "Turbo", # X!
     # "Warrior", # `X
     # "Wildcard", # C
+
+    # "Q Swing",  # Q ##not on buttonweavers
+    # "Unique",  # uX ##not on buttonweavers
+
     "Auxiliary",  # +X
     "Berserk",  # BX
     "Boom",  # bX
