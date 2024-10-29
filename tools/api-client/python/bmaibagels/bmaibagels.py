@@ -25,6 +25,7 @@ import monitor
 # need to not accept games that have some specials skills we cant account for (Japanese Beetle)
 
 always_odds = [item.lower() for item in ["Bagels", "AnnoDomini", "ElihuRoot"]]
+debug_chat = [item.lower() for item in ["Bagels"]]
 
 
 def parse_args():
@@ -438,6 +439,8 @@ class BMAIBagels(object):
                      stats=None,
                      other_odds=False):
 
+    debug = f" @ {game['gameState']}" if game["opponent"]["playerName"].lower() in debug_chat else ""
+    
     sorted_chat = sorted(game["gameChatLog"], key=lambda x: x["timestamp"])
 
     bot_has_talked = False
@@ -463,7 +466,7 @@ class BMAIBagels(object):
 
     retval = None
     if other_odds and "chance BMAIBagels wins" in bot_last_chat_mesg:
-      retval = f"{win_odds}% chance BMAIBagels wins (after re-roll)"
+      retval = f"{win_odds}% chance BMAIBagels wins (after re-roll) {debug}"
     elif not bot_has_talked:
       retval = banner + "\nCOMMANDS: odds, stats"
     elif opponent_needs_reply:
@@ -477,11 +480,11 @@ class BMAIBagels(object):
           "win?" in opponent_last_chat_mesg.lower() or
           "odds" in opponent_last_chat_mesg.lower() or
           game["opponent"]["playerName"].lower() in always_odds):
-        retval = f"{win_odds}% chance BMAIBagels wins (before re-roll)"
+        retval = f"{win_odds}% chance BMAIBagels wins (before re-roll) {debug}"
       else:
         retval = self.utils.get_random_fortune()
     elif game["opponent"]["playerName"].lower() in always_odds:
-      retval = f"{win_odds}% chance BMAIBagels wins (before re-roll)"
+      retval = f"{win_odds}% chance BMAIBagels wins (before re-roll) {debug}"
 
     if not retval:
       return "", False
