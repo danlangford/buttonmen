@@ -486,6 +486,7 @@ class BMAIBagels(object):
     elif game["opponent"]["playerName"].lower() in always_odds:
       retval = f"{win_odds}% chance BMAIBagels wins (before re-roll) {debug}"
 
+    print(f"chat: {retval}")
     if not retval:
       return "", False
     else:
@@ -514,6 +515,8 @@ class SomeUtils:
 
 
 if __name__ == "__main__":
+  print("startup fortune test:")
+  print(SomeUtils().get_random_fortune())
   args = parse_args()
   print(f"args={args}")
   bmclient = bmutils.BMClientParser(args.config, args.site)
