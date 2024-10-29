@@ -505,7 +505,8 @@ class BMAIBagels(object):
 class SomeUtils:
 
   def get_fortune_file(self):
-    return "./fortunes/" + random.choice(listdir("./fortunes")).replace(
+    current_dir = pathlib.Path(__file__).parent.resolve()
+    return f"{current_dir}/fortunes/" + random.choice(listdir(f"{current_dir}/fortunes")).replace(
         ".dat", "")
 
   def get_random_fortune(self):
