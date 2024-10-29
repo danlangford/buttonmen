@@ -93,8 +93,9 @@ class Monitor(object):
                   " vs. "
                   f"{game['opponentName']} ({game['opponentButtonName']})")
             games_active = True
-            handle_active(game)
-            count=count+1
+            result = handle_active(game)
+            if result == True:
+              count=count+1
 
       if games_active and await_confirm:
         input()

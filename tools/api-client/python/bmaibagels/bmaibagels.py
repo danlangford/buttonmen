@@ -144,7 +144,7 @@ class BMAIBagels(object):
   def monitor_handler(self, game, calc_other_side=False):
     gameid = game["gameId"]
     if gameid in self.bad_games:
-      return
+      return False
 
     # if gameid not in [80638]:
     #   return
@@ -153,22 +153,22 @@ class BMAIBagels(object):
 
     if game["gameState"] in ["END_GAME", "CANCELLED", "DETERMINE_INITIATIVE"]:
       print(f"game {gameid} state is {game['gameState']}")
-      return
+      return True
 
     if not game["player"]["waitingOnAction"] and not calc_other_side:
       # may have come in recursivly and we need to break away if its not actually our turn
       print(f"not my turn in game {gameid}")
-      return
+      return True
 
     if calc_other_side:
 
       if game["gameState"] not in ["START_TURN"]:
         print(f"game {gameid} is not at {game['gameState']}, dont waste time calculating other side")
-        return
+        return True
 
       if game["player"]["waitingOnAction"]:
         print(f"game {gameid} is waiting on action, no time to calculate other side")
-        return
+        return True
       else:
         print(f"calculating the other side")
 
@@ -192,7 +192,7 @@ class BMAIBagels(object):
         if ply == 0:
           ## tried ply all the way down to 0. still timout problems
           self.bad_game(game["gameId"], bmai_input, f"started at ply={self.ply} and reached ply={ply} while still timing out")
-          break
+          return False
       except BaseException as e:
         ## some other problem
         message = getattr(e, 'message', repr(e))
@@ -201,11 +201,11 @@ class BMAIBagels(object):
           break
         traceback.print_tb(e.__traceback__)
         self.bad_game(game["gameId"], bmai_input, message)
-        break
+        return False
 
     # if we have been calcing the other side then we need to be DONE!!!
     if calc_other_side:
-      return
+      return True
 
     # lets immediately try to go again
     # to quickly address the situations where we won initiative
