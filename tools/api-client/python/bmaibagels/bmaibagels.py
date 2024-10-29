@@ -34,7 +34,7 @@ def parse_args():
       "--binary",
       help="path to BMAI binary",
       type=str,
-      default="./bmai-v3.0-39-g45f2b4c",
+      default="./bmai-v3.0-45-g5f3e623",
   )
   parser.add_argument(
       "-c",
@@ -57,12 +57,11 @@ def parse_args():
       choices=["all", "odd", "even"],
   )
   parser.add_argument(
-      "-r",
-      "--random",
-      help="randomize game list",
-      default=False,
-      action="store_true",
-      dest="random",
+    "--sort",
+    help="sort game list",
+    default="asc",
+    type=str,
+    choices=["shuffle", "desc", "asc"],
   )
   parser.add_argument(
       "-g",
@@ -74,8 +73,14 @@ def parse_args():
       "--ply",
       help="set AI ply (lookahead)",
       type=int,
-      default=2,
+      default=3,
       choices=[0, 1, 2, 3, 4, 5],
+  )
+  parser.add_argument(
+      "--count",
+      help="how many games to try before getting a new list of games. useful with `--sort desc` to play the most recent games first while continuing to look for recent games",
+      type=int,
+      default=-1,
   )
   return parser.parse_args()
 
@@ -87,26 +92,29 @@ class BMAIBagels(object):
                ply,
                binary,
                filter="all",
-               shuffle=False):
+               sort="asc",
+               count=-1):
     self.client = client
     self.monitor = monitor.Monitor(self.client)
     self.game_data = game_data.GameData(self.client)
     self.bad_games = []
     self.buttons = []
     self.filter = filter
-    self.doshuffle = shuffle
+    self.sort = sort
     self.bmai = BMAI()
     self.utils = SomeUtils()
     self.ply = ply
     self.binary = binary
+    self.count = count
 
   def start_monitor(self):
     self.monitor.start(
         handle_active=self.monitor_handler,
         handle_new=self.new_challenge,
         await_confirm=False,
-        shuffle=self.doshuffle,
+        sort=self.sort,
         filter=self.filter,
+        max=self.count,
     )
 
   def new_challenge(self, game):
@@ -142,13 +150,16 @@ class BMAIBagels(object):
 
     game = self.game_data.fetch(gameid)
 
-    if not game["player"]["waitingOnAction"] and calc_other_side:
-      print("calculating the other side")
-
-    # may have come in recursivly and we need to break away if its not actually our turn
-    if not game["player"]["waitingOnAction"] and not calc_other_side:
-      print("not my turn")
+    if game["gameState"] == "END_GAME":
+      print(f"game {gameid} is finished")
       return
+    if not game["player"]["waitingOnAction"]:
+      if calc_other_side:
+        print("calculating the other side")
+      else:
+        # may have come in recursivly and we need to break away if its not actually our turn
+        print(f"not my turn in game {gameid}")
+        return
 
     can_check_other_odds = False
 
@@ -168,13 +179,16 @@ class BMAIBagels(object):
         print(f"timed out gameId={game['gameId']} ply={ply}")
         if ply == 0:
           ## tried ply all the way down to 0. still timout problems
-          self.bad_game(game["gameId"], bmai_input)
+          self.bad_game(game["gameId"], bmai_input, f"started at ply={self.ply} and reached ply={ply} while still timing out")
           break
       except BaseException as e:
         ## some other problem
-        print(f"Exception {getattr(e, 'message', repr(e))}")
+        message = getattr(e, 'message', repr(e))
+        print(f"Exception {message}")
+        if "You can't edit the requested chat message now" in message:
+          break
         traceback.print_tb(e.__traceback__)
-        self.bad_game(game["gameId"], bmai_input)
+        self.bad_game(game["gameId"], bmai_input, message)
         break
 
     # if we have been calcing the other side then we need to be DONE!!!
@@ -208,6 +222,8 @@ class BMAIBagels(object):
     can_check_other_odds = False
     win_odds = None
     stats = None
+    problem = None
+
     for line in bmai.stdout:
       if " p0 best move " in line and "%" in line:
         win_odds = line.split("%")[0].split()[-1]
@@ -215,6 +231,7 @@ class BMAIBagels(object):
         stats = line
       if "err" in line or "fail" in line:
         print(line, end="")
+        problem = line
         printed = True
       if not other_odds and "action" in line:
         if state == "SPECIFY_DICE":
@@ -269,13 +286,12 @@ class BMAIBagels(object):
       print(f"other_odds={other_odds} win_odds={win_odds} new_odds={new_odds}")
       (chat, x) = self.determine_chat(
           game, None, win_odds=new_odds, other_odds=True)
-      # retval = self.client.wrap_submit_chat(game["gameId"], chat)
-      ## somehow need to submit `edit` timestamp when editing a chat
-      ### {"type":"submitChat","game":"91846","chat":"chat while attack -- edit","edit":1684560609}
-      # print(str(retval))
+      lastchatlog = game["gameChatLog"][0]
+      chat = lastchatlog["message"] + "\nedit: " + chat
+      retval = self.client.wrap_submit_chat(game["gameId"], chat, edit_timestamp=lastchatlog["timestamp"])
     if not acted and not other_odds:
-      print("¯\_(ツ)_/¯")
-      self.bad_game(game["gameId"], input)
+      print("¯\\_(ツ)_/¯")
+      self.bad_game(game["gameId"], input, f"no action taken\n¯\\_(ツ)_/¯\n{problem}")
     bmai.stdin.flush()
     bmai.stdin.close()
     bmai.stdout.flush()
@@ -435,8 +451,8 @@ class BMAIBagels(object):
       opponent_needs_reply = True
 
     retval = None
-    if other_odds and "chance to win" in bot_last_chat_mesg:
-      retval = f"{win_odds}% chance to win (after re-roll)"
+    if other_odds and "chance BMAIBagels wins" in bot_last_chat_mesg:
+      retval = f"{win_odds}% chance BMAIBagels wins (after re-roll)"
     elif not bot_has_talked:
       retval = banner + "\nCOMMANDS: odds, stats"
     elif opponent_needs_reply:
@@ -450,23 +466,26 @@ class BMAIBagels(object):
           "win?" in opponent_last_chat_mesg.lower() or
           "odds" in opponent_last_chat_mesg.lower() or
           game["opponent"]["playerName"].lower() in always_odds):
-        retval = f"{win_odds}% chance to win (before re-roll)"
+        retval = f"{win_odds}% chance BMAIBagels wins (before re-roll)"
       else:
         retval = self.utils.get_random_fortune()
     elif game["opponent"]["playerName"].lower() in always_odds:
-      retval = f"{win_odds}% chance to win (before re-roll)"
+      retval = f"{win_odds}% chance BMAIBagels wins (before re-roll)"
 
     if not retval:
       return "", False
     else:
-      print(retval)
-      return retval, ("chance to win" in retval and not other_odds)
+      return retval, ("chance BMAIBagels wins" in retval and not other_odds)
 
-  def bad_game(self, game_id, game_input):
+  def bad_game(self, game_id, game_input, info=None):
     self.bad_games.append(game_id)
     text_file = open(f"{game_id}-input.txt", "wt")
     text_file.write(game_input)
     text_file.close()
+    if info is not None:
+      text_file = open(f"{game_id}-info.txt", "wt")
+      text_file.write(info)
+      text_file.close()
 
 
 class SomeUtils:
@@ -486,9 +505,11 @@ if __name__ == "__main__":
   bmaibagels = BMAIBagels(
       bmclient,
       filter=args.filter,
-      shuffle=args.random,
+      sort=args.sort,
       ply=args.ply,
-      binary=args.binary)
+      binary=args.binary,
+      count=args.count,
+  )
   if args.gameid:
     bmaibagels.monitor_handler({"gameId": args.gameid})
   else:
