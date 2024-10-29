@@ -45,14 +45,23 @@ class Monitor(object):
       handle_new=lambda g: None,
       handle_active=lambda g: None,
       await_confirm=True,
-      shuffle=False,
+      sort="ASC",
       filter="all",
+      max=-1,
   ):
+
+    sort = sort.upper()
+    sort = "SHUFFLE" if sort == "RANDOM" else sort
+
     while True:
 
       newgames = self.client.wrap_load_new_games()
-      if shuffle:
+
+      if sort == "SHUFFLE":
         random.shuffle(newgames)
+      elif sort == "DESC":
+        newgames.reverse()
+
       for ng in newgames:
         if ((filter == "all") or (filter == "odd" and ng["gameId"] % 2 != 0) or
             (filter == "even" and ng["gameId"] % 2 == 0)):
@@ -64,10 +73,17 @@ class Monitor(object):
             handle_new(ng)
 
       games = self.client.wrap_load_active_games()
-      if shuffle:
+
+      if sort == "SHUFFLE":
         random.shuffle(games)
+      elif sort == "DESC":
+        games.reverse()
+
+      count=0
       games_active = False
       for game in games:
+        if max > 0 and count > max:
+          break
         if ((filter == "all") or
             (filter == "odd" and game["gameId"] % 2 != 0) or
             (filter == "even" and game["gameId"] % 2 == 0)):
@@ -78,6 +94,7 @@ class Monitor(object):
                   f"{game['opponentName']} ({game['opponentButtonName']})")
             games_active = True
             handle_active(game)
+            count=count+1
 
       if games_active and await_confirm:
         input()
