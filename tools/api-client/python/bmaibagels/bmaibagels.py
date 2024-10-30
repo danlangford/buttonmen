@@ -120,6 +120,8 @@ class BMAIBagels(object):
     )
 
   def get_disallowed_skills(self, game):
+    if len(self.buttons) == 0:
+      self.buttons = self.client.wrap_load_button_names()
     myskills = (
         self.buttons[game["myButtonName"]]["dieTypes"] +
         self.buttons[game["myButtonName"]]["dieSkills"])
@@ -134,8 +136,6 @@ class BMAIBagels(object):
     #  and not "use" the dice like AUX dice.
     #  they would need to be hidden from BMAI
     gameid = game["gameId"]
-    if len(self.buttons) == 0:
-      self.buttons = self.client.wrap_load_button_names()
     disallowedset = self.get_disallowed_skills(game)
     if len(disallowedset) > 0:
       print(f"Not accepting games with the following: {disallowedset}")
