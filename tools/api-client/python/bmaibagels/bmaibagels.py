@@ -120,15 +120,33 @@ class BMAIBagels(object):
     )
 
   def get_disallowed_skills(self, game):
+
     if len(self.buttons) == 0:
       self.buttons = self.client.wrap_load_button_names()
-    myskills = (
-        self.buttons[game["myButtonName"]]["dieTypes"] +
-        self.buttons[game["myButtonName"]]["dieSkills"])
-    theirskills = (
-        self.buttons[game["opponentButtonName"]]["dieTypes"] +
-        self.buttons[game["opponentButtonName"]]["dieSkills"])
-    supportset = set(myskills + theirskills)
+    supportset = set()
+
+    if "myButtonName" in game and "opponentButtonName" in game:
+      supportset.update(
+          self.buttons[game["myButtonName"]]["dieTypes"] +
+          self.buttons[game["myButtonName"]]["dieSkills"])
+      supportset.update(
+          self.buttons[game["opponentButtonName"]]["dieTypes"] +
+          self.buttons[game["opponentButtonName"]]["dieSkills"])
+
+    if "player" in game and "opponent" in game:
+      supportset.update(
+        self.buttons[game["player"]["button"]["name"]]["dieTypes"] +
+        self.buttons[game["player"]["button"]["name"]]["dieSkills"])
+      supportset.update(
+        self.buttons[game["opponent"]["button"]["name"]]["dieTypes"] +
+        self.buttons[game["opponent"]["button"]["name"]]["dieSkills"])
+
+      for die in game["player"]["activeDieArray"] + game["opponent"]["activeDieArray"]:
+        supportset.update(die["skills"])
+
+    # gameSkillsInfo includes some non-skills like RandomBMDuoskill :-(
+    # supportset = supportset | set(game["gameSkillsInfo"].keys())
+
     return supportset - bmai_supported_skills
 
   def new_challenge(self, game):
