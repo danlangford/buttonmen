@@ -104,7 +104,7 @@ class BMAIBagels(object):
                count=-1,
                sleep_sec=120):
     self.client = client
-    self.monitor = monitor.Monitor(self.client, sleep_sec=sleep_time)
+    self.monitor = monitor.Monitor(self.client, sleep_sec=sleep_sec)
     self.game_data = game_data.GameData(self.client)
     # pre-seed some particularly bad games with long execution times
     # TODO: someday we need to dive into why these are grumpy, one IS trip related
