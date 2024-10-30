@@ -25,7 +25,8 @@ import monitor
 # need to not accept games that have some specials skills we cant account for (Japanese Beetle)
 
 always_odds = [item.lower() for item in ["Bagels", "AnnoDomini", "ElihuRoot"]]
-debug_chat = [item.lower() for item in ["Bagels"]]
+# debug_chat = [item.lower() for item in ["Bagels"]]
+debug_chat = []
 
 
 def parse_args():
