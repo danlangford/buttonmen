@@ -82,7 +82,8 @@ class Monitor(object):
       count=0
       games_active = False
       for game in games:
-        if max > 0 and count > max:
+        if max > 0 and count >= max:
+          print(f"count {count} reached max {max}")
           break
         if ((filter == "all") or
             (filter == "odd" and game["gameId"] % 2 != 0) or
@@ -93,16 +94,16 @@ class Monitor(object):
                   " vs. "
                   f"{game['opponentName']} ({game['opponentButtonName']})")
             games_active = True
-            result = handle_active(game)
-            if result == True:
+            if handle_active(game):
               count=count+1
 
       if games_active and await_confirm:
         input()
       else:
-        print(
-            f"Zzz for {self.sleep_sec} @ {datetime.isoformat(datetime.now())}")
-        time.sleep(self.sleep_sec)
+        if max<=0:
+          print(
+              f"Zzz for {self.sleep_sec} @ {datetime.isoformat(datetime.now())}")
+          time.sleep(self.sleep_sec)
 
 
 if __name__ == "__main__":

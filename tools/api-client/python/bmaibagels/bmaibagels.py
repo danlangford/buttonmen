@@ -211,7 +211,7 @@ class BMAIBagels(object):
     # to quickly address the situations where we won initiative
     # or the other player was forced to pass
     # also try to calculate the new odds after a re-roll
-    self.monitor_handler(game, calc_other_side=can_check_other_odds)
+    return self.monitor_handler(game, calc_other_side=can_check_other_odds)
 
   @func_set_timeout(60 * 60)  #
   def exec_bmai(self, input, game, state, other_odds=False):
@@ -274,7 +274,7 @@ class BMAIBagels(object):
             l = bmai.stdout.readline().strip()
             if len(l) > 0:
               turbo_select.append(l)
-          (isok, can_check_other_odds) = self.submit_attack(
+          (isok, can_check_other_odds, atk_resp) = self.submit_attack(
               game,
               atk_type,
               source_dice,
@@ -286,6 +286,8 @@ class BMAIBagels(object):
           )
           if isok:
             acted = True
+          else:
+            problem = atk_resp
           continue
         elif state == "REACT_TO_INITIATIVE":
           action = bmai.stdout.readline().strip()
@@ -419,7 +421,7 @@ class BMAIBagels(object):
         chat=chat,
     )
     print(retval.message)
-    return retval.status == "ok", can_check_other_odds
+    return retval.status == "ok", can_check_other_odds, retval.message
 
   def _generate_attack_array(self, game, my_idx, their_idx, attackers,
                              defenders):
