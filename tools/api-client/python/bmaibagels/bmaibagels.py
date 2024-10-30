@@ -163,7 +163,7 @@ class BMAIBagels(object):
     if calc_other_side:
 
       if game["gameState"] not in ["START_TURN"]:
-        print(f"game {gameid} is not at {game['gameState']}, dont waste time calculating other side")
+        print(f"game {gameid} is at {game['gameState']}, dont waste time calculating other side")
         return True
 
       if game["player"]["waitingOnAction"]:
