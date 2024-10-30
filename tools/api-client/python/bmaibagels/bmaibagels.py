@@ -119,13 +119,7 @@ class BMAIBagels(object):
         max=self.count,
     )
 
-  def new_challenge(self, game):
-    # TODO: some dice exist where we could "accept" the game
-    #  and not "use" the dice like AUX dice.
-    #  they would need to be hidden from BMAI
-    gameid = game["gameId"]
-    if len(self.buttons) == 0:
-      self.buttons = self.client.wrap_load_button_names()
+  def get_disallowed_skills(self, game):
     myskills = (
         self.buttons[game["myButtonName"]]["dieTypes"] +
         self.buttons[game["myButtonName"]]["dieSkills"])
@@ -133,7 +127,16 @@ class BMAIBagels(object):
         self.buttons[game["opponentButtonName"]]["dieTypes"] +
         self.buttons[game["opponentButtonName"]]["dieSkills"])
     supportset = set(myskills + theirskills)
-    disallowedset = supportset - bmai_supported_skills
+    return supportset - bmai_supported_skills
+
+  def new_challenge(self, game):
+    # TODO: some dice exist where we could "accept" the game
+    #  and not "use" the dice like AUX dice.
+    #  they would need to be hidden from BMAI
+    gameid = game["gameId"]
+    if len(self.buttons) == 0:
+      self.buttons = self.client.wrap_load_button_names()
+    disallowedset = self.get_disallowed_skills(game)
     if len(disallowedset) > 0:
       print(f"Not accepting games with the following: {disallowedset}")
       action = "reject"
@@ -147,9 +150,6 @@ class BMAIBagels(object):
     if gameid in self.bad_games:
       return False
 
-    # if gameid not in [80638]:
-    #   return
-
     game = self.game_data.fetch(gameid)
 
     if game["gameState"] in ["END_GAME", "CANCELLED", "DETERMINE_INITIATIVE"]:
@@ -161,6 +161,13 @@ class BMAIBagels(object):
       print(f"not my turn in game {gameid}")
       return True
 
+    disallowedset = self.get_disallowed_skills(game)
+    if len(disallowedset) > 0:
+      msg=f"game {gameid} has disallowed skills: {disallowedset}"
+      print(msg)
+      self.bad_game(gameid, game_data.bmai.dump(game), f"rejected before execution: {msg}")
+      return False
+
     if calc_other_side:
 
       if game["gameState"] not in ["START_TURN"]:
@@ -171,7 +178,7 @@ class BMAIBagels(object):
         print(f"game {gameid} is waiting on action, no time to calculate other side")
         return True
       else:
-        print(f"calculating the other side")
+        print("calculating the other side")
 
 
     can_check_other_odds = False

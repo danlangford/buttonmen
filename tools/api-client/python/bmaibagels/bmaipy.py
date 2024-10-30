@@ -4,7 +4,9 @@ bmai_supported_skills = {
     # "Boom", # bX
     # "Fire", # FX
     # "Jolt", # JX
+    # "Konstant",  # kX # not fully implemented in BMAI, doesn't allow +/-
     # "Mad", # X&
+    # "Rage",  # GX # this might actually not be working in BMAI
     # "Rush", # #X
     # "Value", # vX
     # "Wildcard", # C
@@ -14,7 +16,6 @@ bmai_supported_skills = {
     "Doppleganger",  # DX
     "Focus",  # fX
     "Insult",  # IX
-    "Konstant",  # kX
     "Maximum",  # MX
     "Mighty",  # HX
     "Mood",  # X?
@@ -24,7 +25,6 @@ bmai_supported_skills = {
     "Poison",  # pX
     "Queer",  # qX
     "Radioactive",  # %X
-    "Rage",  # GX # this might actually not be working in BMAI
     "Reserve",  # rX
     "Shadow",  # sX
     "Slow",  # wX
