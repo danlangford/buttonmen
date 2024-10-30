@@ -75,7 +75,7 @@ def parse_args():
       "--ply",
       help="set AI ply (lookahead)",
       type=int,
-      default=3,
+      default=2,
       choices=[0, 1, 2, 3, 4, 5],
   )
   parser.add_argument(
@@ -292,9 +292,8 @@ class BMAIBagels(object):
           continue
         elif state == "START_TURN":
           turbos = game["player"]["turboSizeArray"]
-          # when turboSizeArray is empty is a list, when populated its a dict, normalizing
-          if len(turbos) == 0:
-            turbos = {}
+          if isinstance(turbos, list):
+            turbos = {index + 1: value for index, value in enumerate(turbos)}
           turbo_select = {}
           atk_type = bmai.stdout.readline().strip()
           source_dice = bmai.stdout.readline().strip()
