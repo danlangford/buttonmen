@@ -162,6 +162,8 @@ class BMAIBagels(object):
     # TODO: some dice exist where we could "accept" the game
     #  and not "use" the dice like AUX dice.
     #  they would need to be hidden from BMAI
+
+    # TODO: consider making sure the bot can even make the first move before accepting the game
     gameid = game["gameId"]
     disallowedset = self.get_disallowed_skills(game)
     if len(disallowedset) > 0:
@@ -172,8 +174,8 @@ class BMAIBagels(object):
 
     return self.client.wrap_react_to_new_game(gameid, action)
 
-  def monitor_handler(self, game, calc_other_side=False):
-    gameid = game["gameId"]
+  def monitor_handler(self, gameref, calc_other_side=False):
+    gameid = gameref["gameId"]
     if gameid in self.bad_games:
       return False
 
@@ -207,6 +209,8 @@ class BMAIBagels(object):
       else:
         print("calculating the other side")
 
+    else:
+      print(f"{gameref['gameId']}: {self.client.username} ({gameref['myButtonName']})  vs. {gameref['opponentName']} ({gameref['opponentButtonName']})")
 
     can_check_other_odds = False
 
@@ -501,8 +505,8 @@ class BMAIBagels(object):
       opponent_needs_reply = True
 
     retval = None
-    if other_odds and "chance BMAIBagels wins" in bot_last_chat_mesg:
-      retval = f"{win_odds}% chance BMAIBagels wins (after re-roll) {debug}"
+    if other_odds and f"chance {self.client.username} wins" in bot_last_chat_mesg:
+      retval = f"{win_odds}% chance {self.client.username} wins (after re-roll) {debug}"
     elif not bot_has_talked:
       retval = banner + "\nCOMMANDS: odds, stats"
     elif opponent_needs_reply:
@@ -516,17 +520,17 @@ class BMAIBagels(object):
           "win?" in opponent_last_chat_mesg.lower() or
           "odds" in opponent_last_chat_mesg.lower() or
           game["opponent"]["playerName"].lower() in always_odds):
-        retval = f"{win_odds}% chance BMAIBagels wins (before re-roll) {debug}"
+        retval = f"{win_odds}% chance {self.client.username} wins (before re-roll) {debug}"
       else:
         retval = self.utils.get_random_fortune()
     elif game["opponent"]["playerName"].lower() in always_odds:
-      retval = f"{win_odds}% chance BMAIBagels wins (before re-roll) {debug}"
+      retval = f"{win_odds}% chance {self.client.username} wins (before re-roll) {debug}"
 
     print(f"chat: {retval}")
     if not retval:
       return "", False
     else:
-      return retval, ("chance BMAIBagels wins" in retval and not other_odds)
+      return retval, (f"chance {self.client.username} wins" in retval and not other_odds)
 
   def bad_game(self, game_id, game_input, info=None):
     self.bad_games.append(game_id)

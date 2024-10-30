@@ -79,6 +79,10 @@ class Monitor(object):
       elif sort == "DESC":
         games.reverse()
 
+      # TODO consider instead of counting up to a max of "goog" games
+      # maybe the monitor should have access to the bad_game list
+      # and filter them away before executing the handler
+
       count=0
       games_active = False
       for game in games:
@@ -89,10 +93,6 @@ class Monitor(object):
             (filter == "odd" and game["gameId"] % 2 != 0) or
             (filter == "even" and game["gameId"] % 2 == 0)):
           if game["isAwaitingAction"]:
-            print(f"{game['gameId']}: "
-                  f"{self.client.username} ({game['myButtonName']})"
-                  " vs. "
-                  f"{game['opponentName']} ({game['opponentButtonName']})")
             games_active = True
             if handle_active(game):
               count=count+1
@@ -100,7 +100,11 @@ class Monitor(object):
       if games_active and await_confirm:
         input()
       else:
-        if max<=0:
+        # we should sleep if we dont have a max we are counting to
+        # or if we have not reached the max yet
+        # which is to say we exhausted the list without hitting our max
+        # meaning there is a small number of playable games right now
+        if max<=0 or count<max:
           print(
               f"Zzz for {self.sleep_sec} @ {datetime.isoformat(datetime.now())}")
           time.sleep(self.sleep_sec)
