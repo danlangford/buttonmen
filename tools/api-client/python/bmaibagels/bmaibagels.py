@@ -292,6 +292,9 @@ class BMAIBagels(object):
           continue
         elif state == "START_TURN":
           turbos = game["player"]["turboSizeArray"]
+          # when turboSizeArray is empty is a list, when populated its a dict, normalizing
+          if len(turbos) == 0:
+            turbos = {}
           turbo_select = {}
           atk_type = bmai.stdout.readline().strip()
           source_dice = bmai.stdout.readline().strip()
