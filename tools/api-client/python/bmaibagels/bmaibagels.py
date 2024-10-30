@@ -127,11 +127,11 @@ class BMAIBagels(object):
 
     if "myButtonName" in game and "opponentButtonName" in game:
       supportset.update(
-          self.buttons[game["myButtonName"]]["dieTypes"] +
-          self.buttons[game["myButtonName"]]["dieSkills"])
+        self.buttons[game["myButtonName"]]["dieTypes"] +
+        self.buttons[game["myButtonName"]]["dieSkills"])
       supportset.update(
-          self.buttons[game["opponentButtonName"]]["dieTypes"] +
-          self.buttons[game["opponentButtonName"]]["dieSkills"])
+        self.buttons[game["opponentButtonName"]]["dieTypes"] +
+        self.buttons[game["opponentButtonName"]]["dieSkills"])
 
     if "player" in game and "opponent" in game:
       supportset.update(
@@ -145,7 +145,7 @@ class BMAIBagels(object):
         supportset.update(die["skills"])
 
     # gameSkillsInfo includes some non-skills like RandomBMDuoskill :-(
-    # supportset = supportset | set(game["gameSkillsInfo"].keys())
+    # supportset = supportset.update(game["gameSkillsInfo"].keys())
 
     return supportset - bmai_supported_skills
 
@@ -291,15 +291,15 @@ class BMAIBagels(object):
           acted = self.submit_reserve(game, l)
           continue
         elif state == "START_TURN":
-          turbos = len(game["player"]["turboSizeArray"])
-          turbo_select = []
+          turbos = game["player"]["turboSizeArray"]
+          turbo_select = {}
           atk_type = bmai.stdout.readline().strip()
           source_dice = bmai.stdout.readline().strip()
           target_dice = bmai.stdout.readline().strip()
-          for t in range(turbos):
+          for k,v in turbos.items():
             l = bmai.stdout.readline().strip()
             if len(l) > 0:
-              turbo_select.append(l)
+              turbo_select[k] = {'array':v, 'line':l}
           (isok, can_check_other_odds, atk_resp) = self.submit_attack(
               game,
               atk_type,
@@ -425,12 +425,9 @@ class BMAIBagels(object):
                                               source.split(" "),
                                               target.split(" "))
     turbo_array = dict()
-    for turbo in turbo_select:
-      parts = turbo.split(" ")
-      # i know this turbo die finder isnt ideal.
-      # will break when there are multiple turbos
-      turbo_idx = max(source.split(" "))
-      turbo_array[turbo_idx] = parts[2]
+    for k,v in turbo_select.items():
+      parts = v['line'].split(" ")
+      turbo_array[k] = parts[2]
 
     (chat, can_check_other_odds) = self.determine_chat(game, banner, win_odds,
                                                        stats)
