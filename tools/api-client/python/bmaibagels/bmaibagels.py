@@ -319,7 +319,8 @@ class BMAIBagels(object):
           if isok:
             acted = True
           else:
-            problem = atk_resp
+            problem = f"atk_type={atk_type} source_dice={source_dice} target_dice={target_dice}\nturbo_select={turbo_select}\nisok={isok} atk_resp={atk_resp}"
+            print(problem)
           continue
         elif state == "REACT_TO_INITIATIVE":
           action = bmai.stdout.readline().strip()
@@ -449,7 +450,6 @@ class BMAIBagels(object):
         turboVals=turbo_array,
         chat=chat,
     )
-    print(retval.message)
     return retval.status == "ok", can_check_other_odds, retval.message
 
   def _generate_attack_array(self, game, my_idx, their_idx, attackers,
