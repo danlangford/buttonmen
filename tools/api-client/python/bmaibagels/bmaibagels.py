@@ -529,7 +529,7 @@ class BMAIBagels(object):
     text_file.write(game_input)
     text_file.close()
     if info is not None:
-      text_file = open(f"{game_id}-info.txt", "wt")
+      text_file = open(f"{game_id}-output.txt", "wt")
       text_file.write(info)
       text_file.close()
 
