@@ -79,6 +79,12 @@ def parse_args():
       choices=[0, 1, 2, 3, 4, 5],
   )
   parser.add_argument(
+      "--zzz",
+      help="sleep time between game checks",
+      type=int,
+      default=120,
+  )
+  parser.add_argument(
       "--count",
       help="how many games to try before getting a new list of games. useful with `--sort desc` to play the most recent games first while continuing to look for recent games",
       type=int,
@@ -95,9 +101,10 @@ class BMAIBagels(object):
                binary,
                filter="all",
                sort="asc",
-               count=-1):
+               count=-1,
+               sleep_sec=120):
     self.client = client
-    self.monitor = monitor.Monitor(self.client)
+    self.monitor = monitor.Monitor(self.client, sleep_sec=sleep_time)
     self.game_data = game_data.GameData(self.client)
     # pre-seed some particularly bad games with long execution times
     # TODO: someday we need to dive into why these are grumpy, one IS trip related
@@ -550,12 +557,13 @@ if __name__ == "__main__":
   print(f"args={args}")
   bmclient = bmutils.BMClientParser(args.config, args.site)
   bmaibagels = BMAIBagels(
-      bmclient,
-      filter=args.filter,
-      sort=args.sort,
-      ply=args.ply,
-      binary=args.binary,
-      count=args.count,
+    bmclient,
+    filter=args.filter,
+    sort=args.sort,
+    ply=args.ply,
+    binary=args.binary,
+    count=args.count,
+    sleep_sec=args.zzz,
   )
   if args.gameid:
     bmaibagels.monitor_handler({"gameId": args.gameid})

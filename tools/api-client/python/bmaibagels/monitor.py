@@ -33,9 +33,9 @@ def parse_args():
 
 class Monitor(object):
 
-  def __init__(self, client):
+  def __init__(self, client, sleep_sec=120):
     self.client = client
-    self.sleep_sec = 120
+    self.sleep_sec = sleep_sec
     if not self.client.verify_login():
       print("Could not login")
       sys.exit(1)
