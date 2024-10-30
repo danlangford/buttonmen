@@ -99,7 +99,9 @@ class BMAIBagels(object):
     self.client = client
     self.monitor = monitor.Monitor(self.client)
     self.game_data = game_data.GameData(self.client)
-    self.bad_games = []
+    # pre-seed some particularly bad games with long execution times
+    # TODO: someday we need to dive into why these are grumpy, one IS trip related
+    self.bad_games = [94507, 93506]
     self.buttons = []
     self.filter = filter
     self.sort = sort
