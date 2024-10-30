@@ -134,24 +134,15 @@ class BMAIBagels(object):
       self.buttons = self.client.wrap_load_button_names()
     supportset = set()
 
-    if "myButtonName" in game and "opponentButtonName" in game:
-      supportset.update(
-        self.buttons[game["myButtonName"]]["dieTypes"] +
-        self.buttons[game["myButtonName"]]["dieSkills"])
-      supportset.update(
-        self.buttons[game["opponentButtonName"]]["dieTypes"] +
-        self.buttons[game["opponentButtonName"]]["dieSkills"])
+    supportset.update(
+      self.buttons[game["player"]["button"]["name"]]["dieTypes"] +
+      self.buttons[game["player"]["button"]["name"]]["dieSkills"])
+    supportset.update(
+      self.buttons[game["opponent"]["button"]["name"]]["dieTypes"] +
+      self.buttons[game["opponent"]["button"]["name"]]["dieSkills"])
 
-    if "player" in game and "opponent" in game:
-      supportset.update(
-        self.buttons[game["player"]["button"]["name"]]["dieTypes"] +
-        self.buttons[game["player"]["button"]["name"]]["dieSkills"])
-      supportset.update(
-        self.buttons[game["opponent"]["button"]["name"]]["dieTypes"] +
-        self.buttons[game["opponent"]["button"]["name"]]["dieSkills"])
-
-      for die in game["player"]["activeDieArray"] + game["opponent"]["activeDieArray"]:
-        supportset.update(die["skills"])
+    for die in game["player"]["activeDieArray"] + game["opponent"]["activeDieArray"]:
+      supportset.update(die["skills"])
 
     # gameSkillsInfo includes some non-skills like RandomBMDuoskill :-(
     # supportset = supportset.update(game["gameSkillsInfo"].keys())
@@ -174,8 +165,8 @@ class BMAIBagels(object):
 
     return self.client.wrap_react_to_new_game(gameid, action)
 
-  def monitor_handler(self, gameref, calc_other_side=False):
-    gameid = gameref["gameId"]
+  def monitor_handler(self, game, calc_other_side=False):
+    gameid = game["gameId"]
     if gameid in self.bad_games:
       return False
 
@@ -210,7 +201,7 @@ class BMAIBagels(object):
         print("calculating the other side")
 
     else:
-      print(f"{gameref['gameId']}: {self.client.username} ({gameref['myButtonName']})  vs. {gameref['opponentName']} ({gameref['opponentButtonName']})")
+      print(f"{game['gameId']}: {game['player']['playerName']} ({game['player']['button']['name']})  vs. {game['opponent']['playerName']} ({game['opponent']['button']['name']})")
 
     can_check_other_odds = False
 
