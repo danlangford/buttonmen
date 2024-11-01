@@ -2,9 +2,10 @@ bmai_supported_skills = {
 
     # "Auxiliary", # +X ## while there is some evidence of Aux in BMAI there are many pieces missing
     # "Boom", # bX
+     "Doppelganger",  # DX # not yet implemented in BMAI # TODO disable here in on button filter if needed
     # "Fire", # FX
     # "Jolt", # JX
-    # "Konstant",  # kX # not fully implemented in BMAI, doesn't allow +/-
+     "Konstant",  # kX # not fully implemented in BMAI, doesn't allow +/- # TODO disable here in on button filter if needed
     # "Mad", # X&
     # "Rage",  # GX # this might actually not be working in BMAI
     # "Rush", # #X
@@ -13,7 +14,6 @@ bmai_supported_skills = {
 
     "Berserk",  # BX
     "Chance",  # cX
-    "Doppleganger",  # DX
     "Focus",  # fX
     "Insult",  # IX
     "Maximum",  # MX
