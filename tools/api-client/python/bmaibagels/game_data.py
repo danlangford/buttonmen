@@ -63,7 +63,11 @@ class bmai(object):
 
     # if sides selected for swing or option, include them
     if ("/" in r or "Swing" in d["description"]) and d["sides"]:
-      r += "-" + str(d["sides"])
+      # for Twin we want to describe the die size of each die, not the total
+      if 'Twin' in d["properties"]:
+        r += "-" + str(d["subdieArray"][0]["sides"]) # which should also be d["sides"]/2
+      else:
+        r += "-" + str(d["sides"])
 
     # include value as needed
     if d["value"]:
