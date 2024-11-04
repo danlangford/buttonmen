@@ -134,15 +134,24 @@ class BMAIBagels(object):
       self.buttons = self.client.wrap_load_button_names()
     supportset = set()
 
-    supportset.update(
-      self.buttons[game["player"]["button"]["name"]]["dieTypes"] +
-      self.buttons[game["player"]["button"]["name"]]["dieSkills"])
-    supportset.update(
-      self.buttons[game["opponent"]["button"]["name"]]["dieTypes"] +
-      self.buttons[game["opponent"]["button"]["name"]]["dieSkills"])
-
-    for die in game["player"]["activeDieArray"] + game["opponent"]["activeDieArray"]:
-      supportset.update(die["skills"])
+    if "myButtonName" in game:
+      supportset.update(
+        self.buttons[game["myButtonName"]]["dieTypes"] +
+        self.buttons[game["myButtonName"]]["dieSkills"])
+    if "opponentButtonName" in game:
+      supportset.update(
+        self.buttons[game["opponentButtonName"]]["dieTypes"] +
+        self.buttons[game["opponentButtonName"]]["dieSkills"])
+    if "player" in game:
+      supportset.update(
+        self.buttons[game["player"]["button"]["name"]]["dieTypes"] +
+        self.buttons[game["player"]["button"]["name"]]["dieSkills"])
+      supportset.update(die["skills"] for die in game["player"]["activeDieArray"])
+    if "opponent" in game:
+      supportset.update(
+        self.buttons[game["opponent"]["button"]["name"]]["dieTypes"] +
+        self.buttons[game["opponent"]["button"]["name"]]["dieSkills"])
+      supportset.update(die["skills"] for die in game["opponent"]["activeDieArray"])
 
     # gameSkillsInfo includes some non-skills like RandomBMDuoskill :-(
     # supportset = supportset.update(game["gameSkillsInfo"].keys())
