@@ -146,12 +146,15 @@ class BMAIBagels(object):
       supportset.update(
         self.buttons[game["player"]["button"]["name"]]["dieTypes"] +
         self.buttons[game["player"]["button"]["name"]]["dieSkills"])
-      supportset.update(die["skills"] for die in game["player"]["activeDieArray"])
+      for die in game["player"]["activeDieArray"]:
+        supportset.update(die["skills"])
     if "opponent" in game:
       supportset.update(
         self.buttons[game["opponent"]["button"]["name"]]["dieTypes"] +
         self.buttons[game["opponent"]["button"]["name"]]["dieSkills"])
-      supportset.update(die["skills"] for die in game["opponent"]["activeDieArray"])
+      for die in game["opponent"]["activeDieArray"]:
+        supportset.update(die["skills"])
+
 
     # gameSkillsInfo includes some non-skills like RandomBMDuoskill :-(
     # supportset = supportset.update(game["gameSkillsInfo"].keys())
