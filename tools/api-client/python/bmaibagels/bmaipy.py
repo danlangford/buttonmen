@@ -9,7 +9,6 @@ bmai_supported_skills = {
     # "Mad", # X&
     # "Rage",  # GX # this might actually not be working in BMAI
     # "Rush", # #X
-    # "Value", # vX
     # "Wildcard", # C
 
     "Berserk",  # BX
@@ -34,6 +33,7 @@ bmai_supported_skills = {
     "TimeAndSpace",  # ^X
     "Trip",  # tX
     "Turbo",  # X!
+    "Value", # vX
     "Warrior",  # `X
     "Weak",  # hX
     "P Swing",  # P
