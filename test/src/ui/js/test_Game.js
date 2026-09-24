@@ -1230,6 +1230,8 @@ test("test_Game.pageAddSkillListFooter", function(assert) {
       "Die skills footer text is present");
     assert.ok(htmlout.match('Focus'),
       "Die skills footer text lists the Focus skill");
+    assert.equal(Game.page.find('div.help_box').length, 1,
+      "Skill list footer includes a box for skill help");
     start();
   });
 });

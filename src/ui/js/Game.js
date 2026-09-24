@@ -2002,6 +2002,7 @@ Game.pageAddGameNavigationFooter = function() {
 // Display a footer-style message with the list of skills in this game
 Game.pageAddSkillListFooter = function() {
   var gameSkillDiv = $('<div>');
+  var helpBox = $('<div>', { 'class': 'help_box', });
 
   var dieSkillSpanArray = [];
   var buttonSkillSpanArray = [];
@@ -2027,15 +2028,7 @@ Game.pageAddSkillListFooter = function() {
       skillDesc += interactDescArray.join('\n');
     }
 
-    skillSpan = $('<span>').append($('<span>', {
-      'text': skill,
-      'title': skillDesc,
-      'class': 'skill_desc',
-    })).append($('<span>', {
-      'text': 'i',
-      'title': skillDesc,
-      'class': 'info_icon',
-    }));
+    skillSpan = Env.buildHelpLabel(skill, skillDesc, 'skill_desc', helpBox);
 
     if (info.code) {
       dieSkillSpanArray.push(skillSpan);
@@ -2063,6 +2056,7 @@ Game.pageAddSkillListFooter = function() {
         )
       );
     }
+    gameSkillDiv.append(helpBox);
   }
 
   Game.page.append($('<br>'));

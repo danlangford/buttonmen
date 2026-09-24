@@ -521,17 +521,12 @@ UserPrefs.appendToPreferencesTable = function(prefsTable, sectionTitle,
     }
     var labelEntry;
     if (entryInfo.help) {
+      var helpBox = $('<div>', { 'class': 'help_box', });
       labelEntry = $('<td>', {
         'class': 'label label_' + entryInfo.type,
-      }).append($('<span>', {
-        'text': labelText,
-        'title': entryInfo.help,
-        'class': 'prefs_desc',
-      })).append($('<span>', {
-        'text': 'i',
-        'title': entryInfo.help,
-        'class': 'info_icon',
-      }));
+      }).append(Env.buildHelpLabel(
+        labelText, entryInfo.help, 'prefs_desc', helpBox
+      )).append(helpBox);
     } else {
       labelEntry = $('<td>', {
         'text': labelText,

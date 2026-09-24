@@ -254,6 +254,27 @@ test("test_Env.addClickKeyboardHandlers", function(assert) {
   start();
 });
 
+test("test_Env.buildHelpLabel", function(assert) {
+  var helpBox = $('<div>');
+  var label = Env.buildHelpLabel('Focus', 'Focus help', 'skill_desc', helpBox);
+  assert.equal(label.find('span.skill_desc').attr('title'), 'Focus help',
+    'Label text should include help as tooltip.');
+  assert.equal(label.find('span.info_icon').attr('title'), 'Focus help',
+    'Info icon should include help as tooltip.');
+  assert.equal(label.attr('tabIndex'), '0',
+    'Label should be keyboard selectable.');
+
+  label.trigger('click');
+  assert.equal(helpBox.text(), 'Focus help', 'Click should show help.');
+  label.trigger('click');
+  assert.equal(helpBox.text(), '', 'Second click should hide help.');
+
+  var spacePress = jQuery.Event('keydown');
+  spacePress.which = 32;
+  label.trigger(spacePress);
+  assert.equal(helpBox.text(), 'Focus help', 'Spacebar should show help.');
+});
+
 test("test_Env.prepareRawTextForDisplay", function(assert) {
   var rawText = '<b>HTML</b>\n[i]BB Code[/i]';
   var holder = $('<div>');

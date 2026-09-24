@@ -499,13 +499,13 @@ span.skill_title {
 span.skill_desc {
     border-bottom: 1px dotted #000000;
     text-decoration: none;
-    cursor: default;
+    cursor: pointer;
 }
 
 span.prefs_desc {
     border-bottom: 1px dotted #000000;
     text-decoration: none;
-    cursor: default;
+    cursor: pointer;
 }
 
 span.suit_black {
@@ -530,7 +530,20 @@ span.info_icon {
     font-size: 0.6em;
     display: inline-block;
     width: 1em;
-    cursor: default;
+    cursor: pointer;
+}
+
+div.help_box {
+    text-align: left;
+    white-space: pre-line;
+    max-width: 40em;
+    margin: 0.5em auto;
+    padding: 0.3em;
+    border: 1px solid #000080;
+}
+
+div.help_box:empty {
+    display: none;
 }
 
 .unselected_player {

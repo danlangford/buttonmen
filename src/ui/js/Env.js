@@ -235,6 +235,25 @@ Env.addClickKeyboardHandlers = function(
   }
 };
 
+// Utility function to build a label with an info icon.  The help text
+// shows on hover, and click or keypress toggles it in helpBox.
+Env.buildHelpLabel = function(text, help, labelClass, helpBox) {
+  var label = $('<span>', { 'tabIndex': 0, }).append($('<span>', {
+    'text': text,
+    'title': help,
+    'class': labelClass,
+  })).append($('<span>', {
+    'text': 'i',
+    'title': help,
+    'class': 'info_icon',
+  }));
+  var toggleHelp = function() {
+    helpBox.text((helpBox.text() == help) ? '' : help);
+  };
+  Env.addClickKeyboardHandlers(label, toggleHelp, toggleHelp, toggleHelp);
+  return label;
+};
+
 // Takes text that was entered by a user and turns it into HTML that's ready to
 // be displayed on a page.
 Env.prepareRawTextForDisplay = function(rawText) {
