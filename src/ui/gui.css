@@ -350,6 +350,7 @@ select.center {
     color: blue;
     margin: 4px;
     cursor: default;
+    touch-action: manipulation;
 }
 
 .die_img {
