@@ -282,6 +282,14 @@ input::-webkit-inner-spin-button {
     margin: 0;
 }
 
+/* some iOS browsers draw nearly invisible borders on unstyled inputs */
+@supports (-webkit-touch-callout: none) {
+    input[type='text'], input[type='number'], input[type='password'],
+    textarea {
+        border: 1px solid #767676;
+    }
+}
+
 input.player1_toggle {
     margin-left: 80px;
 }
