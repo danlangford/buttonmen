@@ -207,11 +207,10 @@ ButtonSelection.updateButtonSelectTd = function(player) {
 
 ButtonSelection.updateButtonList = function(player, limitid) {
   if (limitid) {
-    var buttonText = $('#' + player + '_button_chosen > a > span').text();
-    var delimiterIdx = buttonText.indexOf(':');
-    if (delimiterIdx >= 0) {
-      ButtonSelection.activity[player + 'Button'] =
-        buttonText.substr(0, delimiterIdx);
+    // Chosen not always available, read <select> directly
+    var buttonVal = $('#' + player + '_button').val();
+    if (buttonVal) {
+      ButtonSelection.activity[player + 'Button'] = buttonVal;
     }
 
     var optsTag = 

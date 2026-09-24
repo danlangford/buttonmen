@@ -227,6 +227,8 @@ test("test_ButtonSelection.updateButtonList", function(assert) {
     assert.ok(("Jellybean" in ButtonSelection.activity.buttonList.opponent),
       "before update, Jellybean is included in the set of available buttons for the opponent");
 
+    $('#opponent_button').val('Jellybean');
+
     // now deselect the ANY button set and select the BROM button set
     anyOption.removeAttr('selected');
     bromOption.attr('selected', 'selected');
@@ -238,6 +240,8 @@ test("test_ButtonSelection.updateButtonList", function(assert) {
       "after list update, Avis is not included in the set of available buttons for the opponent");
     assert.ok(("Jellybean" in ButtonSelection.activity.buttonList.opponent),
       "after update, Jellybean is still included in the set of available buttons for the opponent");
+    assert.equal(ButtonSelection.activity.opponentButton, 'Jellybean',
+      "after update, the selected opponent button is remembered");
     start();
   });
 });
