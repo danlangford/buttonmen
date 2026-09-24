@@ -242,6 +242,22 @@ test("test_ButtonSelection.updateButtonList", function(assert) {
       "after update, Jellybean is still included in the set of available buttons for the opponent");
     assert.equal(ButtonSelection.activity.opponentButton, 'Jellybean',
       "after update, the selected opponent button is remembered");
+
+    // mobile browsers add to the selection, leaving ANY selected
+    anyOption.prop('selected', true);
+    ButtonSelection.updateButtonList('opponent', 'button_sets');
+    assert.ok(!anyOption.prop('selected'),
+      "ANY is deselected when another button set is selected");
+    assert.ok(!("Avis" in ButtonSelection.activity.buttonList.opponent),
+      "after ANY is deselected, Avis is not included in the set of available buttons for the opponent");
+
+    // with nothing selected, the user most likely wants ANY
+    bromOption.prop('selected', false);
+    ButtonSelection.updateButtonList('opponent', 'button_sets');
+    assert.ok(anyOption.prop('selected'),
+      "with no button sets selected, ANY is selected again");
+    assert.ok(("Avis" in ButtonSelection.activity.buttonList.opponent),
+      "with ANY selected again, Avis is included in the set of available buttons for the opponent");
     start();
   });
 });

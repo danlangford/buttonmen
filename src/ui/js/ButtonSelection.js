@@ -215,6 +215,18 @@ ButtonSelection.updateButtonList = function(player, limitid) {
 
     var optsTag = 
       '#' + ButtonSelection.getLimitSelectid(player, limitid) + ' option';
+
+    // mobile multi-selects add to the selection rather than replacing it,
+    // so drop ANY once a specific choice has been made
+    if ($(optsTag + ':selected').length > 1) {
+      $(optsTag + '[value="ANY"]').prop('selected', false);
+    }
+
+    // with nothing selected, the user most likely wants ANY
+    if (!$(optsTag + ':selected').length) {
+      $(optsTag + '[value="ANY"]').prop('selected', true);
+    }
+
     $.each($(optsTag), function() {
       ButtonSelection.activity.buttonLimits[player][limitid][$(this).val()] = 
         false;
