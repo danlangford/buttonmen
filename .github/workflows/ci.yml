@@ -1,0 +1,221 @@
+name: CI
+
+# Runs the same checks as .circleci/config.yml (see deploy/ci/steps.sh),
+# split into parallel jobs on a prebuilt image.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: CI image
+    # Branches in this repository are tested on push; pull_request runs are for forks
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.pick.outputs.image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - id: names
+        env:
+          OWNER: ${{ github.repository_owner }}
+          HASH: ${{ hashFiles('deploy/vagrant/**', 'deploy/circleci/manifests/**', 'deploy/ci/Dockerfile') }}
+          ON_DEFAULT_BRANCH: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+        run: |
+          base="ghcr.io/${OWNER,,}/buttonmen-ci"
+          echo "image=${base}:deps-${HASH:0:16}" >> "$GITHUB_OUTPUT"
+          echo "latest=${base}:latest" >> "$GITHUB_OUTPUT"
+          # Only the default branch moves :latest
+          tags="${base}:deps-${HASH:0:16}"
+          if [ "$ON_DEFAULT_BRANCH" = "true" ]; then tags="${tags},${base}:latest"; fi
+          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - id: check
+        env:
+          IMAGE: ${{ steps.names.outputs.image }}
+        run: |
+          if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Fork pull requests can't push images; they fall back to :latest below
+      - if: steps.check.outputs.found == 'false' && github.event_name != 'pull_request'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - if: steps.check.outputs.found == 'false' && github.event_name != 'pull_request'
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/ci/Dockerfile
+          push: true
+          tags: ${{ steps.names.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - id: pick
+        env:
+          IMAGE: ${{ steps.names.outputs.image }}
+          LATEST: ${{ steps.names.outputs.latest }}
+          AVAILABLE: ${{ steps.check.outputs.found == 'true' || steps.build.outcome == 'success' }}
+        run: |
+          if [ "$AVAILABLE" = "true" ]; then
+            echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          else
+            echo "image=$LATEST" >> "$GITHUB_OUTPUT"
+          fi
+
+  audits:
+    name: Lint and audits
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Audit line termination of all files
+        run: deploy/ci/steps.sh audit-newlines
+      - name: Audit layout of .php files
+        run: deploy/ci/steps.sh audit-php
+      - name: Audit test coverage of .js files
+        run: deploy/ci/steps.sh audit-js-coverage
+      - name: Run grunt JS lint tests
+        run: deploy/ci/steps.sh grunt
+      - name: Generate checkstyle.xml using PHP_CodeSniffer
+        run: deploy/ci/steps.sh phpcs
+      - if: (!cancelled())
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Checkstyle
+          path: build/logs/checkstyle.xml
+          if-no-files-found: ignore
+
+  tests:
+    name: Unit tests
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The database rebuild test compares this branch with origin/master
+          fetch-depth: 0
+      - name: Apply puppet to this checkout
+        run: deploy/ci/steps.sh prepare
+      - name: Test consistency of mysql database update files
+        run: deploy/ci/steps.sh db-rebuild
+      - name: Run unit tests using PHPUnit
+        run: deploy/ci/steps.sh phpunit
+      - name: Install and verify dummy API files created by PHPUnit
+        run: deploy/ci/steps.sh dummy-data
+      - name: Run QUnit tests
+        run: deploy/ci/steps.sh qunit
+      - name: Run python2 client unit tests
+        run: deploy/ci/steps.sh python27
+      - name: Run python3 client unit tests
+        run: deploy/ci/steps.sh python39
+      - name: Summarise results
+        if: (!cancelled())
+        run: deploy/ci/steps.sh summary
+      - if: (!cancelled())
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Test Results
+          path: build/logs/junit.xml
+          if-no-files-found: ignore
+      - if: (!cancelled())
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Test logs
+          path: build/logs/
+          if-no-files-found: ignore
+
+  metrics:
+    name: Code metrics
+    # Weekly, on demand, and on the default branch: nobody reads these on every push
+    if: >-
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: PHP_Depend, PHPMD, phploc and PHP_CodeBrowser
+        run: deploy/ci/steps.sh metrics
+      - if: (!cancelled())
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Code metrics
+          path: build/
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish test results
+    # Fork pull requests are published by ci-results.yml, which can write checks
+    if: (!cancelled()) && github.event_name != 'pull_request' && needs.tests.result != 'skipped'
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: Test Results
+          path: results
+      - uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3 # v2.24.0
+        with:
+          files: results/*.xml
+          comment_mode: off
+
+  event-file:
+    name: Event file
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
